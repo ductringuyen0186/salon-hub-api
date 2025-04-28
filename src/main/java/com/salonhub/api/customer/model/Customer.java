@@ -6,9 +6,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "customers")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Customer {
 
     @Id
@@ -21,51 +28,9 @@ public class Customer {
     @Column(nullable = false)
     private String name;
 
+    @Size(max = 255)
     private String phoneNumber;
 
     @Column(columnDefinition = "TEXT")
     private String note;
-
-    public Customer() { }
-
-    public Customer(String email, String name, String phoneNumber, String note) {
-        this.email = email;
-        this.name = name;
-        this.phoneNumber = phoneNumber;
-        this.note = note;
-    }
-
-    // ─── Getters & Setters ──────────────────────────────────────────────────────
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getNote() {
-        return note;
-    }
-    public void setNote(String note) {
-        this.note = note;
-    }
 }

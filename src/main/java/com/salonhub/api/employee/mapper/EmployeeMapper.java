@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import com.salonhub.api.employee.dto.EmployeeRequestDTO;
 import com.salonhub.api.employee.dto.EmployeeResponseDTO;
 import com.salonhub.api.employee.model.Employee;
+import com.salonhub.api.employee.model.Role;
 
 @Component
 public class EmployeeMapper {
@@ -22,12 +23,11 @@ public class EmployeeMapper {
 
     /** Map from Request DTO → Entity (for create/update) */
     public Employee toEntity(EmployeeRequestDTO dto) {
-        if (dto == null) return null;
-        Employee e = new Employee();
-        e.setName(dto.getName());
-        e.setAvailable(dto.getAvailable());
-        e.setRole(dto.getRole());
-        return e;
+        return new Employee(
+            dto.getName(),
+            Role.valueOf(dto.getRole()),  // convert String to Enum manually
+            dto.getAvailable() != null ? dto.getAvailable() : false
+        );
     }
 
     /** Apply updates from DTO onto an existing Entity */
@@ -39,7 +39,7 @@ public class EmployeeMapper {
             existing.setAvailable(dto.getAvailable());
         }
         if (dto.getRole() != null) {
-            existing.setRole(dto.getRole());
+            existing.setRole(Role.valueOf(dto.getRole()));
         }
     }
 }

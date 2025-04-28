@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'java-test-fixtures'
     id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -33,18 +34,41 @@ dependencies {
     implementation 'mysql:mysql-connector-java:8.0.33'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+    
+    // Swagger / OpenAPI (for Spring Boot 3.4.5)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
+    
+    // AWS
     implementation 'software.amazon.awssdk:dynamodb:2.20.0'
     implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.12.533'
+
+    // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // --- Test Fixtures ---
+    testFixturesImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testFixturesImplementation 'org.testcontainers:junit-jupiter'
+    testFixturesImplementation 'org.testcontainers:mysql'
+    testFixturesImplementation 'org.flywaydb:flyway-core'
+
+    // Allow tests to use testFixtures classes
+    testImplementation testFixtures(project(":"))
 
     // --- Unit tests ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'com.h2database:h2'
 
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+
     // --- Integration tests ---
+    integrationTestImplementation 'org.testcontainers:junit-jupiter'
+    integrationTestImplementation 'org.testcontainers:mysql'
     integrationTestImplementation 'com.h2database:h2'
 }
 
@@ -76,6 +100,6 @@ tasks.register('integrationTest', Test) {
     shouldRunAfter tasks.test
 }
 
-tasks.check {
+tasks.named('check') {
     dependsOn tasks.integrationTest
 }

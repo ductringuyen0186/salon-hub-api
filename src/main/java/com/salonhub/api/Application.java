@@ -8,11 +8,11 @@ import io.swagger.v3.oas.annotations.info.Info;
 
 @SpringBootApplication
 @OpenAPIDefinition(
-    info = @Info(
-       title = "Salon Hub API",
-       version = "v1",
-       description = "OpenAPI documentation for the Salon Hub backend"
-    )
+  info = @Info(
+    title       = "SalonHub API",
+    version     = "3.0.0",
+    description = "REST endpoints for SalonHub application"
+  )
 )
 public class Application {
 

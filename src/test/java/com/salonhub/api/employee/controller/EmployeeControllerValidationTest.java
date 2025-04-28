@@ -50,7 +50,10 @@ class EmployeeControllerValidationTest {
     @Test
     @DisplayName("POST /api/employees with blank name => 400")
     void whenPostBlankName_thenBadRequest() throws Exception {
-        EmployeeRequestDTO dto = new EmployeeRequestDTO("", true, Role.TECHNICIAN);
+        EmployeeRequestDTO dto = new EmployeeRequestDTO();
+        dto.setName("");
+        dto.setAvailable(true);
+        dto.setRole(Role.TECHNICIAN.name());
         mockMvc.perform(post("/api/employees")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(dto)))

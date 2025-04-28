@@ -8,9 +8,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "employees")
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,38 +33,15 @@ public class Employee {
     @Column(nullable = false)
     private Role role;
 
-    public Employee() { }
-
     public Employee(String name, Role role) {
         this.name = name;
         this.role = role;
         this.available = false;
     }
 
-    // ─── Getters & Setters ────────────────────────────────────────────────────
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
+    public Employee(String name, Role role, boolean available) {
         this.name = name;
-    }
-
-    public boolean isAvailable() {
-        return available;
-    }
-    public void setAvailable(boolean available) {
         this.available = available;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-    public void setRole(Role role) {
         this.role = role;
     }
 }

@@ -6,7 +6,7 @@ import com.salonhub.api.employee.mapper.EmployeeMapper;
 import com.salonhub.api.employee.model.Employee;
 import com.salonhub.api.employee.service.EmployeeService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 
@@ -27,7 +27,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/employees")
-@Validated 
 public class EmployeeController {
     private final EmployeeService service;
     private final EmployeeMapper mapper;
@@ -80,13 +79,10 @@ public class EmployeeController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/api/employees/{id}/availability")
+    @PatchMapping("/{id}/availability")
     public ResponseEntity<Void> setAvailability(
             @PathVariable Long id,
-            @RequestParam(required = false) Boolean available) throws BadRequestException {
-        if (available == null) {
-            throw new BadRequestException("Invalid available param");
-        }
+            @RequestParam Boolean available) throws BadRequestException {
         service.setAvailability(id, available);
         return ResponseEntity.ok().build();
     }
