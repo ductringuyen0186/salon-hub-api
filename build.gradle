@@ -103,3 +103,7 @@ tasks.register('integrationTest', Test) {
 tasks.named('check') {
     dependsOn tasks.integrationTest
 }
+
+tasks.named('test') {
+    dependsOn tasks.named('integrationTest')
+}
