@@ -33,4 +33,11 @@ public class Customer {
 
     @Column(columnDefinition = "TEXT")
     private String note;
+
+    public Customer(Long id,String email, String name, String phoneNumber) {
+        this.id = id;
+        this.email = email;
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+    }
 }

@@ -45,6 +45,12 @@ public class AppointmentController {
         return ResponseEntity.ok(service.update(id, dto));
     }
 
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<AppointmentResponseDTO> updateStatus(@PathVariable Long id,
+                                                                @RequestParam String status) {
+        return ResponseEntity.ok(service.updateStatus(id, status));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> cancel(@PathVariable Long id) {
         service.cancel(id);

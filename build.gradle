@@ -51,6 +51,7 @@ dependencies {
 
     // --- Test Fixtures ---
     testFixturesImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testFixturesImplementation "org.springframework.boot:spring-boot-starter-jdbc"
     testFixturesImplementation 'org.testcontainers:junit-jupiter'
     testFixturesImplementation 'org.testcontainers:mysql'
     testFixturesImplementation 'org.flywaydb:flyway-core'

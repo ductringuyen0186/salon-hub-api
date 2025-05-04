@@ -1,9 +1,9 @@
-CREATE TABLE appointments (
-    id BIGSERIAL PRIMARY KEY,
-    customer_id BIGINT   NOT NULL,
-    employee_id BIGINT   NULL,
-    start_time TIMESTAMP NOT NULL,
-    actual_end_time TIMESTAMP NULL,
+CREATE TABLE IF NOT EXISTS appointments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    customer_id BIGINT NOT NULL,
+    employee_id BIGINT NULL,
+    start_time DATETIME NOT NULL,
+    actual_end_time DATETIME NULL,
     status VARCHAR(20) NOT NULL,
     CONSTRAINT fk_appointments_customer FOREIGN KEY (customer_id)
         REFERENCES customers(id) ON DELETE CASCADE,

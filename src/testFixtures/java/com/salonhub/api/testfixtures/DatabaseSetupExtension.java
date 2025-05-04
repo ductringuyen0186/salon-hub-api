@@ -1,14 +1,18 @@
 package com.salonhub.api.testfixtures;
 
 import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.springframework.context.ApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.MySQLContainer;
 
 /**
  * Sets up a real MySQL Testcontainer for integration tests.
  */
-public class DatabaseSetupExtension implements BeforeAllCallback {
+public class DatabaseSetupExtension implements BeforeAllCallback, AfterAllCallback {
 
     public static final MySQLContainer<?> MYSQL_CONTAINER = new MySQLContainer<>("mysql:8.0.32")
             .withDatabaseName("salon")
@@ -38,5 +42,17 @@ public class DatabaseSetupExtension implements BeforeAllCallback {
 
         flyway.clean();
         flyway.migrate();
+
+        ApplicationContext appCtx = SpringExtension.getApplicationContext(context);
+        JdbcTemplate jdbc = appCtx.getBean(JdbcTemplate.class);
+        DatabaseDefaults.seedAll(jdbc);
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) throws Exception {
+        // Clean up database after all tests have run
+        ApplicationContext appCtx = SpringExtension.getApplicationContext(context);
+        JdbcTemplate jdbc = appCtx.getBean(JdbcTemplate.class);
+        DatabaseDefaults.cleanupAll(jdbc);
     }
 }
