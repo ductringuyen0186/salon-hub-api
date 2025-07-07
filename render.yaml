@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: salon-hub-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free # or starter/standard based on your needs
+    buildCommand: ./gradlew bootJar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: salon-hub-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true # Render will generate a secure JWT secret
+    healthCheckPath: /actuator/health
+
+databases:
+  - name: salon-hub-db
+    databaseName: salon_hub
+    user: salon_hub_api
+    plan: free # PostgreSQL database
