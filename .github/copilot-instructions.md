@@ -95,9 +95,10 @@ For each new feature, you MUST implement:
 - **DTO/Mapper Tests**: Test data transformation logic
 
 #### 2. **Integration Tests** (Required)
-- **End-to-End API Tests**: Test complete request/response flow
-- **Database Integration**: Test with real database using Testcontainers
+- **End-to-End API Tests**: Test complete request/response flow with real database
+- **Database Integration**: Uses `@ServerSetupExtension` with seeded test data
 - **Security Integration**: Test authentication/authorization if applicable
+- **Ordered Test Execution**: Use `@TestMethodOrder` for CRUD operations (Create → Read → Update → Delete)
 
 #### 3. **Test Structure Example**
 ```
@@ -117,7 +118,9 @@ src/integration/java/com/salonhub/api/[feature]/
 - Use `@WebMvcTest` for controller tests
 - Import `TestSecurityConfig` for security-related tests
 - Use `@DataJpaTest` for repository tests
-- Use `@SpringBootTest` with Testcontainers for integration tests
+- Use `@ServerSetupExtension` for integration tests (provides database setup)
+- Use `@TestMethodOrder(MethodOrderer.OrderAnnotation.class)` for ordered integration tests
+- Use database defaults from `CustomerDatabaseDefault` and `EmployeeDatabaseDefault`
 
 #### 5. **Test Coverage Standards**
 - **Minimum 80% code coverage** for new features
@@ -156,19 +159,68 @@ class FeatureControllerTest {
 }
 
 // Integration Test Example
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
+@ServerSetupExtension
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FeatureIntegrationTest {
     
-    @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
-            .withDatabaseName("test_db")
-            .withUsername("test")
-            .withPassword("test");
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
+    
+    // Use constants from database defaults
+    private static final Long EXISTING_CUSTOMER_ID = CustomerDatabaseDefault.JANE_ID;
+    private static final Long EXISTING_EMPLOYEE_ID = EmployeeDatabaseDefault.ALICE_ID;
+    
+    private static Long createdEntityId;
     
     @Test
-    void testCompleteFeatureFlow() {
-        // End-to-end test
+    @Order(1)
+    void createEntity_shouldReturnOkAndId() throws Exception {
+        FeatureRequestDTO req = new FeatureRequestDTO();
+        req.setCustomerId(EXISTING_CUSTOMER_ID);
+        req.setEmployeeId(EXISTING_EMPLOYEE_ID);
+        
+        var result = mockMvc.perform(post("/api/features")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").exists())
+            .andReturn();
+            
+        String responseJson = result.getResponse().getContentAsString();
+        FeatureResponseDTO resp = objectMapper.readValue(responseJson, FeatureResponseDTO.class);
+        createdEntityId = resp.getId();
+    }
+    
+    @Test
+    @Order(2)
+    void getEntity_shouldReturnEntity() throws Exception {
+        mockMvc.perform(get("/api/features/{id}", createdEntityId))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(createdEntityId));
+    }
+    
+    @Test
+    @Order(3)
+    void updateEntity_shouldReturnUpdated() throws Exception {
+        FeatureRequestDTO updateReq = new FeatureRequestDTO();
+        updateReq.setCustomerId(EXISTING_CUSTOMER_ID);
+        updateReq.setEmployeeId(EXISTING_EMPLOYEE_ID);
+        
+        mockMvc.perform(put("/api/features/{id}", createdEntityId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateReq)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(createdEntityId));
+    }
+    
+    @Test
+    @Order(4)
+    void deleteEntity_shouldReturnNoContent() throws Exception {
+        mockMvc.perform(delete("/api/features/{id}", createdEntityId))
+            .andExpect(status().isNoContent());
     }
 }
 ```
