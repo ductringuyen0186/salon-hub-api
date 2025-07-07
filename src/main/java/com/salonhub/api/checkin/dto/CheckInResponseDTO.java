@@ -15,6 +15,12 @@ public class CheckInResponseDTO {
     private boolean guest;
     private LocalDateTime checkedInAt;
     private String message;
+    
+    // Queue-related fields that frontend expects
+    private boolean success = true;
+    private Integer estimatedWaitTime;
+    private Integer queuePosition;
+    private Long queueId;
 
     public CheckInResponseDTO(Long id, String name, String phoneNumber, String email, 
                              String note, boolean guest, LocalDateTime checkedInAt, String message) {
@@ -26,5 +32,16 @@ public class CheckInResponseDTO {
         this.guest = guest;
         this.checkedInAt = checkedInAt;
         this.message = message;
+        this.success = true;
+    }
+    
+    // Constructor with queue information
+    public CheckInResponseDTO(Long id, String name, String phoneNumber, String email, 
+                             String note, boolean guest, LocalDateTime checkedInAt, String message,
+                             Integer estimatedWaitTime, Integer queuePosition, Long queueId) {
+        this(id, name, phoneNumber, email, note, guest, checkedInAt, message);
+        this.estimatedWaitTime = estimatedWaitTime;
+        this.queuePosition = queuePosition;
+        this.queueId = queueId;
     }
 }

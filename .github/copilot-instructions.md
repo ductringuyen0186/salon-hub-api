@@ -76,9 +76,38 @@ Integration tests use Testcontainers with MySQL for database testing.
 2. Write failing tests first
 3. Implement feature
 4. Ensure all tests pass: `./gradlew check`
-5. Run application: `./gradlew bootRun`
-6. Test with Docker: `docker-compose up --build`
-7. **Never commit directly to main branch**
+5. **Run application with Docker** (automatically starts containers if not running):
+   ```powershell
+   # Smart startup script - checks if containers are running and starts them if needed
+   $containers = docker ps --filter "name=salon-hub-api" --format "table {{.Names}}"
+   if (-not ($containers -match "salon-hub-api-db-1" -and $containers -match "salon-hub-api-app-1")) {
+       Write-Host "Starting SalonHub containers..."
+       .\gradlew.bat bootJar
+       docker-compose up --build -d
+       Write-Host "Waiting for application to start..."
+       Start-Sleep -Seconds 20
+       Write-Host "Application should be ready at http://localhost:8082"
+   } else {
+       Write-Host "Containers already running!"
+       docker ps --filter "name=salon-hub-api"
+   }
+   ```
+   
+   **If containers are restarting or failing to start:**
+   ```powershell
+   # Complete database reset (fixes Flyway migration issues)
+   docker-compose down -v
+   docker system prune -f
+   docker volume prune -f
+   .\gradlew.bat bootJar
+   docker-compose up --build
+   ```
+   
+   **OR for local development without Docker:**
+   ```bash
+   ./gradlew bootRun
+   ```
+6. **Never commit directly to main branch**
 
 ## Git Commit Guidelines
 
@@ -349,3 +378,302 @@ Before committing any new feature:
 ```
 
 **Remember**: Features without proper tests will be rejected in code review!
+
+## Flyway Migration Troubleshooting
+
+**CRITICAL**: When encountering Flyway migration checksum conflicts, follow this exact procedure:
+
+### Common Flyway Errors
+
+#### 1. Migration Checksum Mismatch
+
+**Error Pattern:**
+```
+FlywayValidateException: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version X
+-> Applied to database : [checksum1]
+-> Resolved locally    : [checksum2]
+Either revert the changes to the migration, or run repair to update the schema history.
+```
+
+**Root Cause:** Migration file was modified after being applied to database.
+
+#### 2. Failed Migration Detection
+
+**Error Pattern:**
+```
+FlywayValidateException: Validate failed: Migrations have failed validation
+Detected failed migration to version X (description).
+Please remove any half-completed changes then run repair to fix the schema history.
+```
+
+**Root Cause:** Previous migration attempt failed, leaving database in inconsistent state.
+
+### **SOLUTION: Complete Database Reset (Development Only)**
+
+**⚠️ WARNING: This destroys all database data. Only use in development environments.**
+
+#### Step 1: Stop and Clean Docker Containers
+
+```powershell
+# Stop all containers and remove volumes
+docker-compose down -v
+
+# Clean Docker system (removes unused containers, networks, images)
+docker system prune -f
+docker volume prune -f
+```
+
+#### Step 2: Verify Migration Files
+
+Check migration files for syntax errors:
+
+```powershell
+# Navigate to migration directory
+cd src\main\resources\db\migration
+
+# List all migration files
+dir V*.sql
+```
+
+**Common MySQL Migration Syntax Issues:**
+- Use `MODIFY COLUMN` instead of `ALTER COLUMN` for MySQL
+- Ensure proper semicolon termination
+- Use correct MySQL data types
+
+**Example of Correct V6 Migration:**
+```sql
+-- Add guest column to customers table
+ALTER TABLE customers 
+ADD COLUMN guest BOOLEAN DEFAULT FALSE NOT NULL;
+
+-- Make email column nullable for guest users
+ALTER TABLE customers 
+MODIFY COLUMN email VARCHAR(255) NULL;
+```
+
+#### Step 3: Rebuild and Restart
+
+```powershell
+# Rebuild the application JAR
+.\gradlew.bat bootJar
+
+# Start fresh containers with clean database
+docker-compose up --build
+```
+
+#### Step 4: Verify Success
+
+```powershell
+# Check container status
+docker ps
+
+# Check application logs
+docker logs salon-hub-api-app-1 --tail 20
+
+# Test API endpoint
+Invoke-WebRequest -Uri "http://localhost:8082/v3/api-docs" -UseBasicParsing
+```
+
+**Success Indicators:**
+- Application logs show: `Started Application in X.X seconds`
+- API returns HTTP 200 status
+- No Flyway validation errors in logs
+
+### **Alternative: Flyway Configuration Fix (Advanced)**
+
+If you need to preserve data, add to `application.yml`:
+
+```yaml
+spring:
+  flyway:
+    clean-disabled: false
+    baseline-on-migrate: true
+    # For development only - allows schema recreation
+```
+
+### **Prevention Best Practices**
+
+1. **Never modify applied migration files** - Always create new migrations
+2. **Test migrations locally** before committing
+3. **Use consistent SQL syntax** for target database (MySQL 8.4)
+4. **Run integration tests** that verify migration success
+5. **Clean Docker volumes** between major database changes
+
+### **Emergency Commands**
+
+```powershell
+# Force clean everything Docker-related
+docker-compose down -v; docker system prune -af; docker volume prune -f
+
+# Rebuild from scratch
+.\gradlew.bat clean bootJar; docker-compose up --build
+
+# Check application health
+Start-Sleep -Seconds 15; docker logs salon-hub-api-app-1 --tail 10
+```
+
+### **Docker Management from VS Code**
+
+**You can manage the entire stack from VS Code without opening Docker Desktop:**
+
+```powershell
+# Start application stack
+docker-compose up --build
+
+# Stop application stack  
+docker-compose down
+
+# View logs
+docker logs salon-hub-api-app-1
+docker logs salon-hub-api-db-1
+
+# Restart just the app (after code changes)
+docker-compose restart app
+```
+
+**VS Code Tasks Available:**
+- `Docker: Start Application` - Starts both containers in background
+- `Docker: Stop Application` - Stops all containers
+
+**Access Points:**
+- API Base URL: `http://localhost:8082`
+- Swagger UI: `http://localhost:8082/swagger-ui/index.html`
+- OpenAPI Docs: `http://localhost:8082/v3/api-docs`
+- Database: `localhost:3306` (root/root)
+
+## Running the Application
+
+### **Recommended: Full Stack with Docker (Automatic)**
+
+**Single command to start everything (build + containers):**
+```powershell
+.\gradlew.bat bootJar; docker-compose up --build
+```
+
+**Smart startup (only starts containers if needed):**
+```powershell
+# PowerShell script to check and start containers automatically
+$containers = docker ps --filter "name=salon-hub-api" --format "table {{.Names}}"
+if (-not ($containers -match "salon-hub-api-db-1" -and $containers -match "salon-hub-api-app-1")) {
+    Write-Host "Starting SalonHub containers..."
+    .\gradlew.bat bootJar
+    docker-compose up --build -d
+    Write-Host "Waiting for application to start..."
+    Start-Sleep -Seconds 20
+    Write-Host "Application should be ready at http://localhost:8082"
+} else {
+    Write-Host "Containers already running!"
+    docker ps --filter "name=salon-hub-api"
+}
+```
+
+**If application containers are restarting or failing:**
+```powershell
+# Check container status first
+docker ps --filter "name=salon-hub-api"
+
+# If containers are restarting, check logs
+docker logs salon-hub-api-app-1 --tail 30
+
+# Complete database reset (fixes Flyway migration and database connection issues)
+docker-compose down -v
+docker system prune -f
+docker volume prune -f
+.\gradlew.bat bootJar
+docker-compose up --build
+
+# Wait for startup and verify
+Start-Sleep -Seconds 30
+Invoke-WebRequest -Uri "http://localhost:8082/v3/api-docs" -UseBasicParsing | Select-Object StatusCode
+```
+
+### **Development Options**
+
+#### Option 1: Full Docker Stack (Recommended for testing)
+```powershell
+# Complete rebuild and restart
+.\gradlew.bat bootJar
+docker-compose up --build
+
+# Background mode (non-blocking)
+.\gradlew.bat bootJar
+docker-compose up --build -d
+```
+
+#### Option 2: Local Spring Boot with Docker Database
+```powershell
+# Start only database container
+docker-compose up db -d
+
+# Run Spring Boot locally (connects to Docker database)
+.\gradlew.bat bootRun
+```
+
+#### Option 3: Quick Container Restart (after code changes)
+```powershell
+# Rebuild JAR and restart app container only
+.\gradlew.bat bootJar
+docker-compose restart app
+```
+
+### **Troubleshooting Container Issues**
+
+**Common Issues and Solutions:**
+
+#### 1. **Application Container Restarting**
+**Symptoms:** Container shows `Restarting (1) Less than a second ago`
+**Cause:** Usually database connection issues or Flyway migration problems
+
+**Solution:**
+```powershell
+# Check application logs for specific error
+docker logs salon-hub-api-app-1 --tail 50
+
+# If you see "Communications link failure" or Flyway errors:
+docker-compose down -v
+docker system prune -f
+docker volume prune -f
+.\gradlew.bat bootJar
+docker-compose up --build
+```
+
+#### 2. **Database Connection Timeout**
+**Symptoms:** `Unable to obtain connection from database: Communications link failure`
+**Cause:** Application starts before database is fully initialized
+
+**Solution:**
+```powershell
+# Stop and restart with proper timing
+docker-compose down
+docker-compose up db -d
+Start-Sleep -Seconds 15  # Wait for database
+docker-compose up app
+```
+
+#### 3. **Flyway Migration Issues**
+**Symptoms:** `Migration checksum mismatch` or `Detected failed migration`
+**Cause:** Migration files modified or database in inconsistent state
+
+**Solution:** Use complete database reset (see Flyway section above)
+
+### **Health Checks and Verification**
+
+```powershell
+# Check container status
+docker ps --filter "name=salon-hub-api"
+
+# View application logs
+docker logs salon-hub-api-app-1 --tail 20
+
+# Test API health
+Invoke-WebRequest -Uri "http://localhost:8082/v3/api-docs" -UseBasicParsing | Select-Object StatusCode
+
+# Quick browser test
+Start-Process "http://localhost:8082/swagger-ui/index.html"
+```
+
+**Application Ready Indicators:**
+- Console shows: `Started Application in X.X seconds`
+- API docs return HTTP 200: `http://localhost:8082/v3/api-docs`
+- Swagger UI loads: `http://localhost:8082/swagger-ui/index.html`
