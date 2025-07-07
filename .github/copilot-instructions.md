@@ -80,6 +80,17 @@ Integration tests use Testcontainers with MySQL for database testing.
 6. Test with Docker: `docker-compose up --build`
 7. **Never commit directly to main branch**
 
+## Git Commit Guidelines
+
+**IMPORTANT**: Only commit and push changes when explicitly requested in the chat conversation.
+
+- **Default behavior**: Make code changes without committing
+- **Commit only when**: The user specifically asks to commit or push changes
+- **Auto-commit exceptions**: Critical fixes that break builds or tests may be committed immediately
+- **Branch management**: Always work on feature branches, never directly on main
+
+This allows for iterative development and gives the user control over when changes are persisted.
+
 ## New Feature Testing Requirements
 
 **EVERY NEW FEATURE MUST INCLUDE COMPREHENSIVE TESTS**
@@ -128,10 +139,107 @@ src/integration/java/com/salonhub/api/[feature]/
 - Test all error scenarios and edge cases
 - Test validation rules and constraints
 
-#### 6. **Test Data Management**
+#### 6. **Test Fixtures and Database Defaults**
+- **Always use test fixtures** for reusable test data and tools
+- **Create database defaults** for new tables or updated columns
+- **Follow the pattern** of existing defaults like `EmployeeDatabaseDefault`
+- **Update associated files** when database schema changes
+
+**Test Fixture Structure:**
+```
+src/testFixtures/java/com/salonhub/api/
+├── [domain]/
+│   ├── [Domain]DatabaseDefault.java
+│   ├── [Domain]TestDataBuilder.java
+│   └── [Domain]TestFixtures.java
+└── ServerSetupExtension.java
+```
+
+**Database Default Pattern (following EmployeeDatabaseDefault):**
+```java
+public class FeatureDatabaseDefault {
+    
+    // Entity IDs (use consistent numbering)
+    public static final Long FEATURE_ID_1 = 1L;
+    public static final Long FEATURE_ID_2 = 2L;
+    
+    // Entity names/references
+    public static final String FEATURE_NAME_1 = "Feature One";
+    public static final String FEATURE_NAME_2 = "Feature Two";
+    
+    // SQL insert statements for test data
+    public static final String INSERT_FEATURE_1 = 
+        "INSERT INTO features (id, name, description, created_at) VALUES " +
+        "(1, 'Feature One', 'Test feature description', NOW())";
+        
+    public static final String INSERT_FEATURE_2 = 
+        "INSERT INTO features (id, name, description, created_at) VALUES " +
+        "(2, 'Feature Two', 'Another test feature', NOW())";
+    
+    // Array of all inserts for batch operations
+    public static final String[] ALL_INSERTS = {
+        INSERT_FEATURE_1,
+        INSERT_FEATURE_2
+    };
+}
+```
+
+**When to Update Test Fixtures:**
+- **New table created**: Create new `[Domain]DatabaseDefault.java`
+- **Column added/updated**: Update existing database defaults
+- **Foreign key relationships**: Update related database defaults
+- **Migration changes**: Ensure test data matches schema
+
+**Test Data Builder Pattern:**
+```java
+public class FeatureTestDataBuilder {
+    
+    private Long id;
+    private String name;
+    private String description;
+    private LocalDateTime createdAt;
+    
+    public static FeatureTestDataBuilder aFeature() {
+        return new FeatureTestDataBuilder()
+            .withId(1L)
+            .withName("Test Feature")
+            .withDescription("Test Description")
+            .withCreatedAt(LocalDateTime.now());
+    }
+    
+    public FeatureTestDataBuilder withId(Long id) {
+        this.id = id;
+        return this;
+    }
+    
+    public FeatureTestDataBuilder withName(String name) {
+        this.name = name;
+        return this;
+    }
+    
+    public Feature build() {
+        Feature feature = new Feature();
+        feature.setId(id);
+        feature.setName(name);
+        feature.setDescription(description);
+        feature.setCreatedAt(createdAt);
+        return feature;
+    }
+    
+    public FeatureRequestDTO buildRequestDTO() {
+        FeatureRequestDTO dto = new FeatureRequestDTO();
+        dto.setName(name);
+        dto.setDescription(description);
+        return dto;
+    }
+}
+```
+
+#### 7. **Test Data Management**
 - Use test fixtures for reusable test data
 - Create builders for complex test objects
 - Use meaningful test data that reflects real scenarios
+- Always reference existing database defaults when possible
 
 ### Example Test Implementation
 
