@@ -10,6 +10,10 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "customers")
@@ -22,7 +26,7 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -34,10 +38,29 @@ public class Customer {
     @Column(columnDefinition = "TEXT")
     private String note;
 
-    public Customer(Long id,String email, String name, String phoneNumber) {
+    @Column(nullable = false)
+    private boolean guest = false;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    public Customer(Long id, String email, String name, String phoneNumber) {
         this.id = id;
         this.email = email;
         this.name = name;
         this.phoneNumber = phoneNumber;
+        this.guest = false;
+    }
+
+    public Customer(String name, String phoneNumber, boolean guest) {
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.guest = guest;
+        this.email = guest ? null : email;
     }
 }

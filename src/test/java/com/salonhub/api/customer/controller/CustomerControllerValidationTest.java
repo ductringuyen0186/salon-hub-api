@@ -11,12 +11,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.salonhub.api.customer.dto.CustomerRequestDTO;
 import com.salonhub.api.customer.mapper.CustomerMapper;
 import com.salonhub.api.customer.service.CustomerService;
+import com.salonhub.api.auth.service.JwtService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 
-@WebMvcTest(CustomerController.class)
+@WebMvcTest(controllers = CustomerController.class,
+    excludeAutoConfiguration = {
+        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+    })
 class CustomerControllerValidationTest {
 
     @Autowired
