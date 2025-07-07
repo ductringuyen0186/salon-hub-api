@@ -6,7 +6,6 @@ on:
 
 jobs:
   publish:
-    needs: build-test
     runs-on: ubuntu-latest
 
     steps:

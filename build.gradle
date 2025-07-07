@@ -45,6 +45,12 @@ dependencies {
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+    // Security & JWT
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
@@ -58,6 +64,9 @@ dependencies {
 
     // Allow tests to use testFixtures classes
     testImplementation testFixtures(project(":"))
+
+    // --- Runtime dependencies ---
+    runtimeOnly 'com.h2database:h2'
 
     // --- Unit tests ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
