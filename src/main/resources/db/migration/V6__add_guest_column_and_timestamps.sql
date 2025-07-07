@@ -2,6 +2,6 @@
 ALTER TABLE customers
 ADD COLUMN guest BOOLEAN NOT NULL DEFAULT FALSE;
 
--- Make email nullable for guest users
+-- Make email nullable for guest users (H2 compatible syntax)
 ALTER TABLE customers
-MODIFY COLUMN email VARCHAR(255) NULL;
+ALTER COLUMN email VARCHAR(255) NULL;

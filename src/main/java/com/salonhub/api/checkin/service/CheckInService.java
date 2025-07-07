@@ -121,14 +121,18 @@ public class CheckInService {
     }
     
     private Customer findExistingCustomer(CheckInRequestDTO request) {
-        String contactInfo = request.getPhoneOrEmail();
+        String contact = request.getContact();
+        String email = request.getEmail();
         
-        if (contactInfo == null || contactInfo.trim().isEmpty()) {
+        if ((contact == null || contact.trim().isEmpty()) && (email == null || email.trim().isEmpty())) {
             throw new IllegalArgumentException("Contact information is required");
         }
         
-        // Try to find by phone number first, then by email
-        Optional<Customer> customerOpt = customerRepository.findByPhoneOrEmail(contactInfo, contactInfo);
+        // Try to find by phone number and email
+        Optional<Customer> customerOpt = customerRepository.findByPhoneOrEmail(
+            contact != null ? contact.trim() : "", 
+            email != null ? email.trim() : ""
+        );
         
         if (customerOpt.isPresent()) {
             return customerOpt.get();

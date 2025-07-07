@@ -34,7 +34,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     List<Queue> findByCustomerIdAndStatus(@Param("customerId") Long customerId, @Param("status") QueueStatus status);
     
     // Find maximum queue number for the day
-    @Query("SELECT MAX(q.queueNumber) FROM Queue q WHERE DATE(q.createdAt) = DATE(CURRENT_DATE)")
+    @Query("SELECT MAX(q.queueNumber) FROM Queue q WHERE CAST(q.createdAt AS DATE) = CAST(CURRENT_DATE AS DATE)")
     Optional<Integer> findMaxQueueNumber();
     
     // Find queue entries by employee ID

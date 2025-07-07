@@ -6,11 +6,13 @@ import com.salonhub.api.queue.dto.QueueUpdateDTO;
 import com.salonhub.api.queue.model.QueueStatus;
 import com.salonhub.api.queue.service.QueueService;
 import com.salonhub.api.testfixtures.QueueTestDataBuilder;
+import com.salonhub.api.config.TestSecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,13 +25,18 @@ import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = QueueController.class)
+@WebMvcTest(controllers = QueueController.class,
+    excludeAutoConfiguration = {
+        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+    })
+@Import(TestSecurityConfig.class)
 class QueueControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private QueueService queueService;
 
     @Autowired

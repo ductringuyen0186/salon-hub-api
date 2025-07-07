@@ -4,6 +4,8 @@ import com.salonhub.api.checkin.dto.CheckInRequestDTO;
 import com.salonhub.api.checkin.dto.CheckInResponseDTO;
 import com.salonhub.api.customer.model.Customer;
 import com.salonhub.api.customer.repository.CustomerRepository;
+import com.salonhub.api.queue.model.Queue;
+import com.salonhub.api.queue.service.QueueService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +27,9 @@ class CheckInServiceTest {
     @Mock
     private CustomerRepository customerRepository;
 
+    @Mock
+    private QueueService queueService;
+
     @InjectMocks
     private CheckInService checkInService;
 
@@ -44,12 +49,12 @@ class CheckInServiceTest {
 
         guestRequest = new CheckInRequestDTO();
         guestRequest.setName("Jane Guest");
-        guestRequest.setPhoneNumber("555-5678");
+        guestRequest.setContact("555-5678");
         guestRequest.setGuest(true);
 
         existingCustomerRequest = new CheckInRequestDTO();
         existingCustomerRequest.setName("John Doe");
-        existingCustomerRequest.setPhoneNumber("555-1234");
+        existingCustomerRequest.setContact("555-1234");
         existingCustomerRequest.setEmail("john@example.com");
         existingCustomerRequest.setGuest(false);
     }
@@ -69,6 +74,14 @@ class CheckInServiceTest {
         
         when(customerRepository.save(any(Customer.class))).thenReturn(savedGuest);
 
+        // Mock queue service
+        Queue mockQueue = new Queue(2L, "Guest check-in");
+        mockQueue.setId(1L);
+        mockQueue.setPosition(1);
+        mockQueue.setEstimatedWaitTime(15);
+        mockQueue.setCreatedAt(LocalDateTime.now());
+        when(queueService.addToQueue(any(Queue.class))).thenReturn(mockQueue);
+
         // Act
         CheckInResponseDTO response = checkInService.checkIn(guestRequest);
 
@@ -77,10 +90,14 @@ class CheckInServiceTest {
         assertEquals("Jane Guest", response.getName());
         assertEquals("555-5678", response.getPhoneNumber());
         assertTrue(response.isGuest());
-        assertEquals("Guest checked in successfully", response.getMessage());
+        assertEquals("Check-in successful! You've been added to the queue.", response.getMessage());
+        assertEquals(1, response.getQueuePosition());
+        assertEquals(15, response.getEstimatedWaitTime());
+        assertEquals(1L, response.getQueueId());
         
         verify(customerRepository).findByPhoneOrEmail("555-5678", "555-5678");
         verify(customerRepository).save(any(Customer.class));
+        verify(queueService).addToQueue(any(Queue.class));
     }
 
     @Test
@@ -88,6 +105,14 @@ class CheckInServiceTest {
         // Arrange
         when(customerRepository.findByPhoneOrEmail(anyString(), anyString()))
             .thenReturn(Optional.of(existingCustomer));
+
+        // Mock queue service
+        Queue mockQueue = new Queue(1L, "Existing customer check-in");
+        mockQueue.setId(2L);
+        mockQueue.setPosition(2);
+        mockQueue.setEstimatedWaitTime(30);
+        mockQueue.setCreatedAt(LocalDateTime.now());
+        when(queueService.addToQueue(any(Queue.class))).thenReturn(mockQueue);
 
         // Act
         CheckInResponseDTO response = checkInService.checkIn(existingCustomerRequest);
@@ -98,10 +123,14 @@ class CheckInServiceTest {
         assertEquals("555-1234", response.getPhoneNumber());
         assertEquals("john@example.com", response.getEmail());
         assertFalse(response.isGuest());
-        assertEquals("Existing customer checked in successfully", response.getMessage());
+        assertEquals("Check-in successful! You've been added to the queue.", response.getMessage());
+        assertEquals(2, response.getQueuePosition());
+        assertEquals(30, response.getEstimatedWaitTime());
+        assertEquals(2L, response.getQueueId());
         
         verify(customerRepository).findByPhoneOrEmail("555-1234", "john@example.com");
         verify(customerRepository, never()).save(any(Customer.class));
+        verify(queueService).addToQueue(any(Queue.class));
     }
 
     @Test
@@ -116,7 +145,7 @@ class CheckInServiceTest {
             () -> checkInService.checkIn(guestRequest)
         );
         
-        assertEquals("A customer with this phone number already exists. Use existing customer check-in instead.", 
+        assertEquals("A customer with this contact information already exists. Use existing customer check-in instead.", 
                     exception.getMessage());
         
         verify(customerRepository).findByPhoneOrEmail("555-5678", "555-5678");
@@ -135,7 +164,7 @@ class CheckInServiceTest {
             () -> checkInService.checkIn(existingCustomerRequest)
         );
         
-        assertEquals("Customer not found with provided phone number or email", exception.getMessage());
+        assertEquals("Customer not found with provided contact information", exception.getMessage());
         
         verify(customerRepository).findByPhoneOrEmail("555-1234", "john@example.com");
         verify(customerRepository, never()).save(any(Customer.class));
@@ -144,7 +173,7 @@ class CheckInServiceTest {
     @Test
     void testCheckInGuest_MissingPhoneNumber() {
         // Arrange
-        guestRequest.setPhoneNumber(null);
+        guestRequest.setContact(null);
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(
@@ -152,7 +181,7 @@ class CheckInServiceTest {
             () -> checkInService.checkIn(guestRequest)
         );
         
-        assertEquals("Phone number is required for guest check-in", exception.getMessage());
+        assertEquals("Contact information is required for guest check-in", exception.getMessage());
         
         verify(customerRepository, never()).findByPhoneOrEmail(anyString(), anyString());
         verify(customerRepository, never()).save(any(Customer.class));
