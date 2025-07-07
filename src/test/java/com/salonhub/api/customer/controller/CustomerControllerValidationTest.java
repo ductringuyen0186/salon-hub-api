@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
@@ -11,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.salonhub.api.customer.dto.CustomerRequestDTO;
 import com.salonhub.api.customer.mapper.CustomerMapper;
 import com.salonhub.api.customer.service.CustomerService;
-import com.salonhub.api.auth.service.JwtService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
         org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
     })
+@Import(com.salonhub.api.config.TestSecurityConfig.class)
 class CustomerControllerValidationTest {
 
     @Autowired
@@ -31,7 +32,6 @@ class CustomerControllerValidationTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    
     private CustomerService service;
 
     @MockitoBean

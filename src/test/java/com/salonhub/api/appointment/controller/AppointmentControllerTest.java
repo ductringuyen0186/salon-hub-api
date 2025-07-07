@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.salonhub.api.appointment.dto.AppointmentRequestDTO;
 import com.salonhub.api.appointment.dto.AppointmentResponseDTO;
 import com.salonhub.api.appointment.service.AppointmentService;
-import com.salonhub.api.auth.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
         org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
     })
+@Import(com.salonhub.api.config.TestSecurityConfig.class)
 class AppointmentControllerTest {
 
     @Autowired
@@ -35,9 +36,6 @@ class AppointmentControllerTest {
 
     @MockitoBean
     private AppointmentService service;
-
-    @MockitoBean
-    private JwtService jwtService;
 
     @Autowired
     private ObjectMapper objectMapper;
