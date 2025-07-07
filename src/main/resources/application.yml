@@ -3,6 +3,9 @@ spring:
     url: jdbc:mysql://localhost:3306/salon
     username: root
     password: root
+  flyway:
+    clean-disabled: false
+    baseline-on-migrate: true
 server:
     port: 8082
 springdoc:
