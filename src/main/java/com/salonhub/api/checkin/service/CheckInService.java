@@ -4,8 +4,11 @@ import com.salonhub.api.checkin.dto.CheckInRequestDTO;
 import com.salonhub.api.checkin.dto.CheckInResponseDTO;
 import com.salonhub.api.customer.model.Customer;
 import com.salonhub.api.customer.repository.CustomerRepository;
+import com.salonhub.api.queue.model.Queue;
+import com.salonhub.api.queue.service.QueueService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,84 +20,157 @@ public class CheckInService {
 
     @Autowired
     private CustomerRepository customerRepository;
+    
+    @Autowired
+    private QueueService queueService;
 
     /**
      * Unified check-in method that handles both guest and existing customer check-ins
+     * Now integrates with queue system
      */
+    @Transactional
     public CheckInResponseDTO checkIn(CheckInRequestDTO request) {
+        Customer customer;
+        String contactInfo = request.getPhoneOrEmail();
+        
         if (request.isGuest()) {
-            return checkInGuest(request);
+            customer = createGuestCustomer(request);
         } else {
-            return checkInExistingCustomer(request);
+            customer = findExistingCustomer(request);
         }
+        
+        // Add customer to queue
+        Queue queueEntry = new Queue(
+            customer.getId(),
+            request.getNote() != null ? request.getNote() : "Walk-in customer"
+        );
+        
+        Queue savedQueueEntry = queueService.addToQueue(queueEntry);
+        
+        return new CheckInResponseDTO(
+            customer.getId(),
+            customer.getName(),
+            customer.getPhoneNumber(),
+            customer.getEmail(),
+            customer.getNote(),
+            customer.isGuest(),
+            savedQueueEntry.getCreatedAt(),
+            "Check-in successful! You've been added to the queue.",
+            savedQueueEntry.getEstimatedWaitTime(),
+            savedQueueEntry.getPosition(),
+            savedQueueEntry.getId()
+        );
     }
 
     /**
      * Check in an existing customer by phone number or email
      */
     public CheckInResponseDTO checkInExistingCustomer(CheckInRequestDTO request) {
-        // Try to find by phone number first, then by email if provided
-        Optional<Customer> customerOpt = customerRepository.findByPhoneOrEmail(
-            request.getPhoneNumber(), request.getEmail() != null ? request.getEmail() : request.getPhoneNumber()
+        Customer customer = findExistingCustomer(request);
+        
+        // Add to queue
+        Queue queueEntry = new Queue(
+            customer.getId(),
+            "Existing customer check-in"
         );
-
-        if (customerOpt.isPresent()) {
-            Customer customer = customerOpt.get();
-            return new CheckInResponseDTO(
-                customer.getId(),
-                customer.getName(),
-                customer.getPhoneNumber(),
-                customer.getEmail(),
-                customer.getNote(),
-                customer.isGuest(),
-                LocalDateTime.now(),
-                "Existing customer checked in successfully"
-            );
-        } else {
-            throw new IllegalArgumentException("Customer not found with provided phone number or email");
-        }
+        
+        Queue savedQueueEntry = queueService.addToQueue(queueEntry);
+        
+        return new CheckInResponseDTO(
+            customer.getId(),
+            customer.getName(),
+            customer.getPhoneNumber(),
+            customer.getEmail(),
+            customer.getNote(),
+            customer.isGuest(),
+            savedQueueEntry.getCreatedAt(),
+            "Existing customer checked in successfully",
+            savedQueueEntry.getEstimatedWaitTime(),
+            savedQueueEntry.getPosition(),
+            savedQueueEntry.getId()
+        );
     }
 
     /**
      * Check in a guest user (creates a new customer record)
      */
     public CheckInResponseDTO checkInGuest(CheckInRequestDTO request) {
-        if (request.getPhoneNumber() == null || request.getPhoneNumber().trim().isEmpty()) {
-            throw new IllegalArgumentException("Phone number is required for guest check-in");
+        Customer guest = createGuestCustomer(request);
+        
+        // Add to queue
+        Queue queueEntry = new Queue(
+            guest.getId(),
+            "Guest check-in"
+        );
+        
+        Queue savedQueueEntry = queueService.addToQueue(queueEntry);
+
+        return new CheckInResponseDTO(
+            guest.getId(),
+            guest.getName(),
+            guest.getPhoneNumber(),
+            guest.getEmail(),
+            guest.getNote(),
+            guest.isGuest(),
+            savedQueueEntry.getCreatedAt(),
+            "Guest checked in successfully",
+            savedQueueEntry.getEstimatedWaitTime(),
+            savedQueueEntry.getPosition(),
+            savedQueueEntry.getId()
+        );
+    }
+    
+    private Customer findExistingCustomer(CheckInRequestDTO request) {
+        String contactInfo = request.getPhoneOrEmail();
+        
+        if (contactInfo == null || contactInfo.trim().isEmpty()) {
+            throw new IllegalArgumentException("Contact information is required");
+        }
+        
+        // Try to find by phone number first, then by email
+        Optional<Customer> customerOpt = customerRepository.findByPhoneOrEmail(contactInfo, contactInfo);
+        
+        if (customerOpt.isPresent()) {
+            return customerOpt.get();
+        } else {
+            throw new IllegalArgumentException("Customer not found with provided contact information");
+        }
+    }
+    
+    private Customer createGuestCustomer(CheckInRequestDTO request) {
+        String contactInfo = request.getPhoneOrEmail();
+        
+        if (contactInfo == null || contactInfo.trim().isEmpty()) {
+            throw new IllegalArgumentException("Contact information is required for guest check-in");
         }
 
         if (request.getName() == null || request.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Name is required for guest check-in");
         }
 
-        // Check if a customer with this phone number already exists
-        Optional<Customer> existingCustomer = customerRepository.findByPhoneOrEmail(
-            request.getPhoneNumber(), request.getPhoneNumber()
-        );
+        // Check if a customer with this contact info already exists
+        Optional<Customer> existingCustomer = customerRepository.findByPhoneOrEmail(contactInfo, contactInfo);
 
         if (existingCustomer.isPresent()) {
-            throw new IllegalArgumentException("A customer with this phone number already exists. Use existing customer check-in instead.");
+            throw new IllegalArgumentException("A customer with this contact information already exists. Use existing customer check-in instead.");
         }
 
         Customer guest = new Customer();
         guest.setName(request.getName().trim());
-        guest.setPhoneNumber(request.getPhoneNumber().trim());
-        guest.setEmail(request.getEmail());
+        
+        // Set phone or email based on format
+        if (request.isContactEmail()) {
+            guest.setEmail(contactInfo);
+            guest.setPhoneNumber(request.getPhoneNumber()); // May be null
+        } else {
+            guest.setPhoneNumber(contactInfo);
+            guest.setEmail(request.getEmail()); // May be null
+        }
+        
         guest.setNote(request.getNote());
         guest.setGuest(true);
 
-        Customer savedGuest = customerRepository.save(guest);
-
-        return new CheckInResponseDTO(
-            savedGuest.getId(),
-            savedGuest.getName(),
-            savedGuest.getPhoneNumber(),
-            savedGuest.getEmail(),
-            savedGuest.getNote(),
-            savedGuest.isGuest(),
-            savedGuest.getCreatedAt(),
-            "Guest checked in successfully"
-        );
+        return customerRepository.save(guest);
     }
 
     /**

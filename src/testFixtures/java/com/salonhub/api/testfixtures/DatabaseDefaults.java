@@ -15,6 +15,7 @@ public class DatabaseDefaults {
         }
         CustomerDatabaseDefault.seed(jdbc);
         EmployeeDatabaseDefault.seed(jdbc);
+        QueueDatabaseDefault.seed(jdbc);
     }
 
     /**
@@ -22,6 +23,7 @@ public class DatabaseDefaults {
      */
     public static void cleanupAll(JdbcTemplate jdbc) {
         // Delete in dependency order
+        jdbc.execute("DELETE FROM queue");
         jdbc.execute("DELETE FROM appointment_services");
         jdbc.execute("DELETE FROM appointments");
         jdbc.execute("DELETE FROM employees");
