@@ -7,6 +7,13 @@ Successfully migrated SalonHub API from MySQL to PostgreSQL for all environments
 
 ### Latest Updates
 
+#### Docker Build Permission Fix (July 2025)
+- **Issue**: Render deployment failing with "Permission denied" on gradlew execution
+- **Root Cause**: `gradlew` script copied to Docker container without executable permissions
+- **Solution**: Added `RUN chmod +x gradlew` command in Dockerfile after copying gradle files
+- **Result**: ✅ Docker build now succeeds, Render deployment fixed
+- **Commit**: `dd089bf` - "Fix: Add executable permissions to gradlew in Dockerfile"
+
 #### Flyway Migration Conflict Fix (July 2025)
 - **Issue**: Duplicate `V1__create_initial_schema.sql` files causing Flyway conflicts
 - **Solution**: Removed duplicate file in `postgresql/` subdirectory
