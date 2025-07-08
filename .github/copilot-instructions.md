@@ -865,13 +865,53 @@ Create comprehensive security validation tests:
 .\gradlew.bat test --tests "RoleBasedSecurityTest"
 ```
 
-### Security Best Practices Learned
+### **Test Framework Patterns**
 
-1. **Method-Level Security**: Use `@PreAuthorize` on controller methods for fine-grained control
-2. **Test Security Early**: Create security tests alongside feature implementation
-3. **Role Hierarchy**: Design clear role inheritance with specific permissions
-4. **Public Endpoint Minimization**: Only essential endpoints should be public
-5. **Self-Access Patterns**: Allow users to access their own data regardless of role
-6. **Documentation**: Maintain detailed permission matrix for all endpoints
-7. **JWT Configuration**: Ensure proper token validation and role extraction
-8. **Test Configuration**: Separate test security config for reliable testing
+#### **Security Test Behavior** 
+
+When testing with `@WebMvcTest` and MockMvc, Spring Security returns different status codes:
+
+- **No Authentication** (no `@WithMockUser`): Returns **403 Forbidden** for protected endpoints
+- **Insufficient Role** (wrong role in `@WithMockUser`): Returns **403 Forbidden** for role-protected endpoints  
+- **Correct Role** (valid role in `@WithMockUser`): Returns **200 OK** or appropriate success status
+
+**Important**: Tests expecting 401 (Unauthorized) should expect 403 (Forbidden) instead in MockMvc context.
+
+#### **Security Test Template**
+
+```java
+@WebMvcTest(ControllerClass.class)
+@Import(TestSecurityConfig.class)
+class ControllerSecurityTest {
+    
+    @Test
+    void endpoint_withoutAuth_shouldReturn403() throws Exception {
+        mockMvc.perform(get("/api/endpoint"))
+                .andExpect(status().isForbidden());  // 403, not 401
+    }
+    
+    @Test
+    @WithMockUser(roles = "INSUFFICIENT_ROLE")
+    void endpoint_withInsufficientRole_shouldReturn403() throws Exception {
+        mockMvc.perform(get("/api/endpoint"))
+                .andExpect(status().isForbidden());  // 403 for wrong role
+    }
+    
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void endpoint_withCorrectRole_shouldReturn200() throws Exception {
+        // Mock service behavior
+        when(service.method()).thenReturn(mockData);
+        
+        mockMvc.perform(get("/api/endpoint"))
+                .andExpect(status().isOk());  // 200 for success
+    }
+}
+```
+
+#### **SpEL Expression Issues**
+
+Some security expressions may fail in test context due to missing authentication principals. Ensure:
+- Use mock authentication principals when testing self-access patterns
+- Avoid complex SpEL expressions in tests without proper authentication context
+- Test method-level security with proper `@WithMockUser` setup
