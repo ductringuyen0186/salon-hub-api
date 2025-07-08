@@ -12,6 +12,9 @@ import jakarta.validation.constraints.Positive;
 
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +28,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Employee Controller with role-based permissions:
+ * - LIST employees: MANAGER, ADMIN
+ * - VIEW individual employee: MANAGER, ADMIN (or self for any role)
+ * - CREATE employee: ADMIN only
+ * - UPDATE employee: ADMIN only
+ * - DELETE employee: ADMIN only
+ * - UPDATE availability: Self or MANAGER, ADMIN
+ */
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
@@ -37,6 +49,7 @@ public class EmployeeController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public List<EmployeeResponseDTO> list() {
         return service.findAll()
                       .stream()
@@ -44,6 +57,7 @@ public class EmployeeController {
                       .toList();
     }
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN') or (authentication.principal.id == #id)")
     public ResponseEntity<Employee> getById(
         @PathVariable @Positive(message = "ID must be a positive number") Long id
     ) {
@@ -53,6 +67,7 @@ public class EmployeeController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EmployeeResponseDTO> create(@Valid @RequestBody EmployeeRequestDTO dto) {
         Employee e = mapper.toEntity(dto);
         Employee saved = service.create(e);
@@ -60,6 +75,7 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EmployeeResponseDTO> update(
         @PathVariable @Positive Long id,
         @Valid @RequestBody EmployeeRequestDTO dto
@@ -74,12 +90,14 @@ public class EmployeeController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/availability")
+    @PreAuthorize("hasRole('ADMIN') or (authentication.principal.id == #id)")
     public ResponseEntity<Void> setAvailability(
             @PathVariable Long id,
             @RequestParam Boolean available) throws BadRequestException {

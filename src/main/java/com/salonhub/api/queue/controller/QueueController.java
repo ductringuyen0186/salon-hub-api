@@ -6,12 +6,19 @@ import com.salonhub.api.queue.model.QueueStatus;
 import com.salonhub.api.queue.service.QueueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Queue Controller with role-based permissions:
+ * - VIEW queue: All authenticated users can view queue
+ * - MODIFY queue: FRONT_DESK, MANAGER, ADMIN
+ * - STATS: MANAGER, ADMIN
+ */
 @RestController
-@RequestMapping("/api/checkin")
+@RequestMapping("/api/queue")
 @RequiredArgsConstructor
 public class QueueController {
     
@@ -19,9 +26,10 @@ public class QueueController {
     
     /**
      * Get current queue (waiting customers)
-     * This is the endpoint the frontend expects: GET /api/checkin/queue
+     * Updated endpoint: GET /api/queue
      */
-    @GetMapping("/queue")
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<QueueEntryDTO>> getCurrentQueue() {
         List<QueueEntryDTO> queue = queueService.getCurrentQueue();
         return ResponseEntity.ok(queue);
@@ -30,7 +38,8 @@ public class QueueController {
     /**
      * Get specific queue entry
      */
-    @GetMapping("/queue/{id}")
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<QueueEntryDTO> getQueueEntry(@PathVariable Long id) {
         try {
             QueueEntryDTO entry = queueService.getQueueEntry(id);
@@ -43,7 +52,8 @@ public class QueueController {
     /**
      * Update queue entry
      */
-    @PutMapping("/queue/{id}")
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('FRONT_DESK', 'MANAGER', 'ADMIN')")
     public ResponseEntity<QueueEntryDTO> updateQueueEntry(
             @PathVariable Long id, 
             @RequestBody QueueUpdateDTO updateDTO) {
@@ -58,7 +68,8 @@ public class QueueController {
     /**
      * Remove customer from queue
      */
-    @DeleteMapping("/queue/{id}")
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('FRONT_DESK', 'MANAGER', 'ADMIN')")
     public ResponseEntity<Void> removeFromQueue(@PathVariable Long id) {
         try {
             queueService.removeFromQueue(id);
@@ -71,7 +82,8 @@ public class QueueController {
     /**
      * Update queue entry status
      */
-    @PatchMapping("/queue/{id}/status")
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('FRONT_DESK', 'MANAGER', 'ADMIN')")
     public ResponseEntity<QueueEntryDTO> updateQueueStatus(
             @PathVariable Long id, 
             @RequestParam String status) {
@@ -87,7 +99,8 @@ public class QueueController {
     /**
      * Get queue statistics
      */
-    @GetMapping("/queue/stats")
+    @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<QueueService.QueueStatistics> getQueueStatistics() {
         QueueService.QueueStatistics stats = queueService.getQueueStatistics();
         return ResponseEntity.ok(stats);
@@ -96,7 +109,8 @@ public class QueueController {
     /**
      * Refresh queue positions
      */
-    @PostMapping("/queue/refresh")
+    @PostMapping("/refresh")
+    @PreAuthorize("hasAnyRole('FRONT_DESK', 'MANAGER', 'ADMIN')")
     public ResponseEntity<Void> refreshQueuePositions() {
         queueService.updateQueuePositions();
         return ResponseEntity.ok().build();

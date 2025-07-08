@@ -3,6 +3,7 @@ package com.salonhub.api.auth.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,15 +34,46 @@ public class SecurityConfiguration {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(req ->
                         req.requestMatchers(
-                                        "/api/auth/**",
-                                        "/api/checkin/**",
+                                        // Authentication endpoints (public)
+                                        "/api/auth/register",
+                                        "/api/auth/login",
+                                        // Check-in endpoints (public for customers and guests)
+                                        "/api/checkin",
+                                        "/api/checkin/existing",
+                                        "/api/checkin/guest", 
+                                        // Health check (public)
+                                        "/actuator/health",
+                                        // API documentation (consider restricting in production)
                                         "/v3/api-docs/**",
                                         "/swagger-ui/**",
-                                        "/swagger-ui.html",
-                                        "/actuator/health"
+                                        "/swagger-ui.html"
                                 ).permitAll()
-                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                                .requestMatchers("/api/employees/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                                // Customer management - FRONT_DESK and above
+                                .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/customers").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/customers/**").hasAnyRole("MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("ADMIN")
+                                // Employee management - MANAGER and above (with method-level security for self-access)
+                                .requestMatchers(HttpMethod.GET, "/api/employees").hasAnyRole("MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/employees").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/employees/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/employees/**").hasRole("ADMIN")
+                                .requestMatchers("/api/employees/**").hasAnyRole("TECHNICIAN", "FRONT_DESK", "MANAGER", "ADMIN")
+                                // Appointment management - FRONT_DESK and above (with method-level security for self-access)
+                                .requestMatchers(HttpMethod.GET, "/api/appointments/customer/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/appointments").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/appointments/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/appointments/**").hasAnyRole("MANAGER", "ADMIN")
+                                .requestMatchers("/api/appointments/**").hasAnyRole("TECHNICIAN", "FRONT_DESK", "MANAGER", "ADMIN")
+                                // Queue management - FRONT_DESK and above for modifications, all authenticated for viewing
+                                .requestMatchers(HttpMethod.GET, "/api/queue/**").authenticated()
+                                .requestMatchers(HttpMethod.PUT, "/api/queue/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/queue/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.PATCH, "/api/queue/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/queue/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                // Check-in guest data viewing - FRONT_DESK and above
+                                .requestMatchers("/api/checkin/guests/today").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
+                                // All other endpoints require authentication
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
