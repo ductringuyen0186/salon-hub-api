@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://dpg-d1lldpbe5dus73fraq7g-a.oregon-postgres.render.com:5432/salon_hub
     username: salon_hub_api
-    password: ${DB_PASSWORD}
+    password: ${DB_PASSWORD:G4MU5sqgq43pvshvcYMVQbqaphCIqthg}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
