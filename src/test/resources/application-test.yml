@@ -2,16 +2,16 @@ spring:
   datasource:
     username: test
     password: test
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate   # important: validate schema only
+      ddl-auto: create-drop   # Create tables for tests, drop after
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     enabled: false
-    locations: classpath:db/migration
+    locations: classpath:db/migration  # Use PostgreSQL migrations for tests
     clean-disabled: false
     clean-on-validation-error: true
   jackson:

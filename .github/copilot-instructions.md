@@ -1,5 +1,9 @@
 # Copilot Instructions for SalonHub API
 
+## 🎯 Overview
+
+This file provides comprehensive development workflows, coding standards, and best practices for GitHub Copilot when working on the SalonHub API project.
+
 ## Project Structure
 
 Follow this exact structure for all new code:
@@ -55,7 +59,7 @@ cd project-directory; .\gradlew.bat check
 - **Integration tests**: `src/integration/java/com/salonhub/api/`
 - **Test fixtures**: `src/testFixtures/java/com/salonhub/api/`
 
-Integration tests use Testcontainers with MySQL for database testing.
+Integration tests use Testcontainers with PostgreSQL for database testing.
 
 ## Database Changes
 
@@ -436,10 +440,10 @@ cd src\main\resources\db\migration
 dir V*.sql
 ```
 
-**Common MySQL Migration Syntax Issues:**
-- Use `MODIFY COLUMN` instead of `ALTER COLUMN` for MySQL
+**Common PostgreSQL Migration Syntax Issues:**
+- Use `ALTER COLUMN` for PostgreSQL column modifications
 - Ensure proper semicolon termination
-- Use correct MySQL data types
+- Use correct PostgreSQL data types
 
 **Example of Correct V6 Migration:**
 ```sql
@@ -496,7 +500,7 @@ spring:
 
 1. **Never modify applied migration files** - Always create new migrations
 2. **Test migrations locally** before committing
-3. **Use consistent SQL syntax** for target database (MySQL 8.4)
+3. **Use consistent SQL syntax** for target database (PostgreSQL)
 4. **Run integration tests** that verify migration success
 5. **Clean Docker volumes** between major database changes
 
@@ -540,7 +544,7 @@ docker-compose restart app
 - API Base URL: `http://localhost:8082`
 - Swagger UI: `http://localhost:8082/swagger-ui/index.html`
 - OpenAPI Docs: `http://localhost:8082/v3/api-docs`
-- Database: `localhost:3306` (root/root)
+- Database: `localhost:5432` (postgres/postgres)
 
 ## Running the Application
 
