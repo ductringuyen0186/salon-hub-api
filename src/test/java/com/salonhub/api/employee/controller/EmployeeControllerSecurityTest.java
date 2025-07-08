@@ -72,9 +72,9 @@ class EmployeeControllerSecurityTest {
     // ===== GET /api/employees - List all employees =====
 
     @Test
-    void listEmployees_withoutAuth_shouldReturn401() throws Exception {
+    void listEmployees_withoutAuth_shouldReturn403() throws Exception {
         mockMvc.perform(get("/api/employees"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test

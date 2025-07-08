@@ -57,7 +57,7 @@ public class EmployeeController {
                       .toList();
     }
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN') or (authentication.principal.id == #id)")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<Employee> getById(
         @PathVariable @Positive(message = "ID must be a positive number") Long id
     ) {
@@ -97,7 +97,7 @@ public class EmployeeController {
     }
 
     @PatchMapping("/{id}/availability")
-    @PreAuthorize("hasRole('ADMIN') or (authentication.principal.id == #id)")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> setAvailability(
             @PathVariable Long id,
             @RequestParam Boolean available) throws BadRequestException {

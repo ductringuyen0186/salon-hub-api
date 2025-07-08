@@ -79,7 +79,7 @@ Integration tests use Testcontainers with PostgreSQL for database testing.
    ```
 2. Write failing tests first
 3. Implement feature
-4. Ensure all tests pass: `./gradlew check`
+4. **CRITICAL**: Ensure all tests pass: `./gradlew check` (ZERO failures required)
 5. **Run application with Docker** (automatically starts containers if not running):
    ```powershell
    # Smart startup script - checks if containers are running and starts them if needed
@@ -112,36 +112,71 @@ Integration tests use Testcontainers with PostgreSQL for database testing.
    ./gradlew bootRun
    ```
 6. **Never commit directly to main branch**
+7. **Never commit/push with failing tests**
 
 ## Git Commit Guidelines
 
-**IMPORTANT**: Only commit and push changes when explicitly requested in the chat conversation.
+**CRITICAL REQUIREMENT**: ALL TESTS MUST PASS before committing and pushing to GitHub.
+
+### Test Verification Before Commit
+
+**MANDATORY STEPS before any commit or push:**
+
+1. **Run full test suite**:
+   ```powershell
+   .\gradlew.bat check
+   ```
+   
+2. **Verify ZERO test failures**:
+   - Unit tests: 0 failures
+   - Security tests: 0 failures  
+   - Integration tests: 0 failures
+   
+3. **Fix any failing tests** before proceeding with commit/push
+
+4. **Only commit when all tests pass**
+
+### Commit Policy
+
+**IMPORTANT**: Only commit and push changes when explicitly requested in the chat conversation AND all tests pass.
 
 - **Default behavior**: Make code changes without committing
-- **Commit only when**: The user specifically asks to commit or push changes
-- **Auto-commit exceptions**: Critical fixes that break builds or tests may be committed immediately
+- **Commit only when**: The user specifically asks to commit or push changes AND `./gradlew check` shows 0 failures
+- **Auto-commit exceptions**: Critical fixes that break builds or tests may be committed immediately (after ensuring tests pass)
 - **Branch management**: Always work on feature branches, never directly on main
+- **Test gate**: Never commit/push with failing tests - this breaks CI/CD and blocks other developers
 
-This allows for iterative development and gives the user control over when changes are persisted.
+This allows for iterative development and gives the user control over when changes are persisted while maintaining code quality.
 
 ## Documentation Guidelines
 
-**IMPORTANT**: Do NOT create new summary markdown files for every feature request.
+**CRITICAL POLICY**: DO NOT create any summary, implementation, or feature documentation files.
+
+### Prohibited Documentation
+
+**NEVER create these types of files:**
+- `FEATURE-SUMMARY.md`
+- `IMPLEMENTATION-SUMMARY.md` 
+- `SECURITY-IMPLEMENTATION-SUMMARY.md`
+- `SECURITY-TEST-SUMMARY.md`
+- `*-SUMMARY.md` (any summary file)
+- `*-IMPLEMENTATION.md` (any implementation file)
+- Feature-specific markdown files unless explicitly requested
 
 ### Documentation Best Practices
 
 - **Update existing instructions**: When implementing new features or solving complex problems, update these Copilot instructions with helpful information for future development
-- **No feature summaries**: Avoid creating files like `FEATURE-SUMMARY.md`, `IMPLEMENTATION-SUMMARY.md` unless they serve a specific ongoing purpose
 - **Update existing docs**: Prefer updating existing documentation files in the `docs/` directory when relevant
 - **Focus on reusable knowledge**: Add patterns, troubleshooting steps, and best practices that will help with future similar tasks
+- **No new markdown files**: Do not create new markdown files for features, implementations, or summaries
 
 ### When to Create New Documentation
 
-**Only create new documentation files when:**
+**Only create new documentation files when explicitly requested by the user for:**
 - **Architecture changes**: Significant system-wide changes that affect multiple components
-- **Security implementations**: Comprehensive security features that need detailed documentation for compliance/review
-- **Deployment guides**: New deployment processes or environment configurations
-- **API specifications**: Major API changes that need client documentation
+- **Security implementations**: Comprehensive security features that need detailed documentation for compliance/review (when explicitly requested)
+- **Deployment guides**: New deployment processes or environment configurations (when explicitly requested)
+- **API specifications**: Major API changes that need client documentation (when explicitly requested)
 
 ### Documentation File Organization
 
@@ -154,7 +189,7 @@ docs/
 └── [specific-feature].md  # Only for major architectural features
 ```
 
-**Remember**: This instructions file is the primary place to document development patterns, troubleshooting steps, and coding standards for future reference.
+**Remember**: This instructions file is the primary place to document development patterns, troubleshooting steps, and coding standards for future reference. DO NOT create additional documentation files for new features or implementations.
 
 ## New Feature Testing Requirements
 

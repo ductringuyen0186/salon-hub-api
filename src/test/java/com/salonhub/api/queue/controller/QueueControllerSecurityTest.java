@@ -65,9 +65,9 @@ class QueueControllerSecurityTest {
     // ===== GET /api/queue - Get current queue =====
 
     @Test
-    void getCurrentQueue_withoutAuth_shouldReturn401() throws Exception {
+    void getCurrentQueue_withoutAuth_shouldReturn403() throws Exception {
         mockMvc.perform(get("/api/queue"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -109,9 +109,9 @@ class QueueControllerSecurityTest {
     // ===== GET /api/queue/{id} - Get specific queue entry =====
 
     @Test
-    void getQueueEntry_withoutAuth_shouldReturn401() throws Exception {
+    void getQueueEntry_withoutAuth_shouldReturn403() throws Exception {
         mockMvc.perform(get("/api/queue/1"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test

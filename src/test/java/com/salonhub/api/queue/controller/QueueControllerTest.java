@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -25,11 +26,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = QueueController.class,
-    excludeAutoConfiguration = {
-        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
-    })
+@WebMvcTest(controllers = QueueController.class)
 @Import(TestSecurityConfig.class)
 class QueueControllerTest {
 
@@ -52,6 +49,7 @@ class QueueControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "TECHNICIAN")
     void getCurrentQueue_shouldReturnQueueList() throws Exception {
         // Given
         List<QueueEntryDTO> queueList = List.of(queueEntryDTO);
@@ -67,6 +65,7 @@ class QueueControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "TECHNICIAN")
     void getCurrentQueue_shouldReturnEmptyList_whenNoQueueEntries() throws Exception {
         // Given
         given(queueService.getCurrentQueue()).willReturn(List.of());
@@ -79,6 +78,7 @@ class QueueControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "TECHNICIAN")
     void getQueueEntry_shouldReturnQueueEntry() throws Exception {
         // Given
         given(queueService.getQueueEntry(1L)).willReturn(queueEntryDTO);
@@ -92,6 +92,7 @@ class QueueControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "TECHNICIAN")
     void getQueueEntry_shouldReturnNotFound_whenQueueEntryNotExists() throws Exception {
         // Given
         given(queueService.getQueueEntry(1L)).willThrow(new IllegalArgumentException("Queue entry not found"));
@@ -102,6 +103,7 @@ class QueueControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     void updateQueueEntry_shouldReturnUpdatedEntry() throws Exception {
         // Given
         given(queueService.updateQueueEntry(eq(1L), any(QueueUpdateDTO.class))).willReturn(queueEntryDTO);
@@ -116,6 +118,7 @@ class QueueControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     void updateQueueEntry_shouldReturnNotFound_whenQueueEntryNotExists() throws Exception {
         // Given
         given(queueService.updateQueueEntry(eq(1L), any(QueueUpdateDTO.class)))
@@ -129,6 +132,7 @@ class QueueControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     void removeFromQueue_shouldReturnNoContent() throws Exception {
         // Given
         doNothing().when(queueService).removeFromQueue(1L);
@@ -139,6 +143,7 @@ class QueueControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     void updateQueueStatus_shouldReturnUpdatedEntry() throws Exception {
         // Given
         given(queueService.updateQueueStatus(1L, QueueStatus.IN_PROGRESS)).willReturn(queueEntryDTO);
@@ -152,6 +157,7 @@ class QueueControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     void updateQueueStatus_shouldReturnBadRequest_whenInvalidStatus() throws Exception {
         // When & Then
         mockMvc.perform(patch("/api/queue/1/status")

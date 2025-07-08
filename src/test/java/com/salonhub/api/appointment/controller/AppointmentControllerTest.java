@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.security.test.context.support.WithMockUser;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,11 +25,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = AppointmentController.class,
-    excludeAutoConfiguration = {
-        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
-    })
+@WebMvcTest(controllers = AppointmentController.class)
 @Import(com.salonhub.api.config.TestSecurityConfig.class)
 class AppointmentControllerTest {
 
@@ -56,6 +54,7 @@ class AppointmentControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     void whenPostValidAppointment_thenReturns200() throws Exception {
         when(service.book(any(AppointmentRequestDTO.class)))
             .thenReturn(new AppointmentResponseDTO());
@@ -69,6 +68,7 @@ class AppointmentControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     void whenPostInvalidAppointment_thenReturns400() throws Exception {
         mockMvc.perform(post("/api/appointments")
                 .contentType(MediaType.APPLICATION_JSON)

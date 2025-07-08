@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
@@ -17,11 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 
-@WebMvcTest(controllers = CustomerController.class,
-    excludeAutoConfiguration = {
-        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
-    })
+@WebMvcTest(controllers = CustomerController.class)
 @Import(com.salonhub.api.config.TestSecurityConfig.class)
 class CustomerControllerValidationTest {
 
@@ -38,6 +35,7 @@ class CustomerControllerValidationTest {
     private CustomerMapper mapper;
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     @DisplayName("POST /api/customers - missing email")
     void testMissingEmail() throws Exception {
         CustomerRequestDTO dto = new CustomerRequestDTO();
@@ -53,6 +51,7 @@ class CustomerControllerValidationTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     @DisplayName("POST /api/customers - invalid email format")
     void testInvalidEmailFormat() throws Exception {
         CustomerRequestDTO dto = new CustomerRequestDTO();
@@ -69,6 +68,7 @@ class CustomerControllerValidationTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     @DisplayName("POST /api/customers - missing name")
     void testMissingName() throws Exception {
         CustomerRequestDTO dto = new CustomerRequestDTO();
@@ -84,6 +84,7 @@ class CustomerControllerValidationTest {
     }
 
     @Test
+    @WithMockUser(roles = "FRONT_DESK")
     @DisplayName("POST /api/customers - phone number too long")
     void testPhoneNumberTooLong() throws Exception {
         CustomerRequestDTO dto = new CustomerRequestDTO();
