@@ -12,6 +12,13 @@ Successfully migrated SalonHub API from MySQL to PostgreSQL for all environments
 - **Solution**: Removed duplicate file in `postgresql/` subdirectory
 - **Result**: ✅ All tests now pass successfully
 
+#### Test Schema Configuration Fix (July 2025)
+- **Issue**: `@DataJpaTest` failing with "Schema-validation: missing table [appointment_services]"
+- **Root Cause**: Test config had `hibernate.ddl-auto: validate` but `flyway.enabled: false`
+- **Solution**: Changed test config to `hibernate.ddl-auto: create-drop` for proper table creation
+- **Result**: ✅ All unit and integration tests pass
+- **Impact**: ✅ GitHub Actions CI build now successful
+
 ### Overview
 Successfully migrated SalonHub API from MySQL to PostgreSQL for all environments (development, testing, CI, production).
 
