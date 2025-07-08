@@ -7,6 +7,17 @@ Successfully migrated SalonHub API from MySQL to PostgreSQL for all environments
 
 ### Latest Updates
 
+#### Render Deployment Configuration Fixes (July 2025)
+- **Issue**: Deployment failing on Render with database connection and health check issues
+- **Root Causes**: 
+  - Incomplete database URL in `prod.yml` (missing `.oregon-postgres.render.com`)
+  - Health check endpoint `/actuator/health` blocked by security configuration
+- **Solutions Applied**:
+  - Fixed database URL: `jdbc:postgresql://dpg-d1lldpbe5dus73fraq7g-a.oregon-postgres.render.com/salon_hub`
+  - Added `/actuator/health` to security `permitAll()` configuration
+- **Result**: ✅ Render health checks should now work properly
+- **Commit**: `4524b45` - "Fix: Resolve deployment issues for Render"
+
 #### JWT Configuration and Environment Fix (July 2025)
 - **Issue**: Application failing to start on Render with "Could not resolve placeholder 'JWT_SECRET'"
 - **Root Cause**: Missing JWT_SECRET environment variable and incorrect profile configuration
