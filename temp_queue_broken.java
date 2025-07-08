@@ -1,6 +1,24 @@
 package com.salonhub.api.queue.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.j    @WithMock    @WithMock    @WithMock    @WithMockUser(roles = {"ADMIN"})
+    void getQueue_withAdminRole_shouldReturn200() throws Exception {
+        List<QueueEntryDTO> entries = List.of(createQueueEntry());
+        when(queueService.getCurrentQueue())    @WithMo    @WithMo    @WithMockUser(roles = {"ADMIN"})
+    void refreshQueue_withAdminRole_shouldReturn200() throws Exception {
+        doNothing().when(queueService).updateQueuePositions();ser(roles = {"MANAGER"})
+    void refreshQueue_withManagerRole_shouldReturn200() throws Exception {
+        doNothing().when(queueService).updateQueuePositions();ser(roles = {"FRONT_DESK"})
+    void refreshQueue_withFrontDeskRole_shouldReturn200() throws Exception {
+        doNothing().when(queueService).updateQueuePositions();enReturn(entries);(roles = {"MANAGER"})
+    void getQueue_withManagerRole_shouldReturn200() throws Exception {
+        List<QueueEntryDTO> entries = List.of(createQueueEntry());
+        when(queueService.getCurrentQueue()).thenReturn(entries);(roles = {"FRONT_DESK"})
+    void getQueue_withFrontDeskRole_shouldReturn200() throws Exception {
+        List<QueueEntryDTO> entries = List.of(createQueueEntry());
+        when(queueService.getCurrentQueue()).thenReturn(entries);(roles = {"TECHNICIAN"})
+    void getQueue_withTechnicianRole_shouldReturn200() throws Exception {
+        List<QueueEntryDTO> entries = List.of(createQueueEntry());
+        when(queueService.getCurrentQueue()).thenReturn(entries);on.databind.ObjectMapper;
 import com.salonhub.api.config.TestSecurityConfig;
 import com.salonhub.api.queue.dto.QueueEntryDTO;
 import com.salonhub.api.queue.dto.QueueUpdateDTO;
