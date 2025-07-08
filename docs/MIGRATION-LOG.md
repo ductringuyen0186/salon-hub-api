@@ -7,6 +7,16 @@ Successfully migrated SalonHub API from MySQL to PostgreSQL for all environments
 
 ### Latest Updates
 
+#### JWT Configuration and Environment Fix (July 2025)
+- **Issue**: Application failing to start on Render with "Could not resolve placeholder 'JWT_SECRET'"
+- **Root Cause**: Missing JWT_SECRET environment variable and incorrect profile configuration
+- **Solutions Applied**:
+  - Added fallback JWT secret in `prod.yml`: `${JWT_SECRET:default-secret}`
+  - Fixed `render.yaml` to use `SALON_HUB_ENV=prod` instead of `SPRING_PROFILES_ACTIVE`
+  - Set explicit JWT_SECRET value in render configuration
+- **Result**: ✅ Application should now start successfully on Render
+- **Commit**: `ad39a44` - "Fix: Resolve JWT configuration and environment variable issues"
+
 #### Docker Build Permission Fix (July 2025)
 - **Issue**: Render deployment failing with "Permission denied" on gradlew execution
 - **Root Cause**: `gradlew` script copied to Docker container without executable permissions
