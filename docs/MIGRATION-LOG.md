@@ -7,6 +7,13 @@ Successfully migrated SalonHub API from MySQL to PostgreSQL for all environments
 
 ### Latest Updates
 
+#### Database Authentication Fix (July 2025)
+- **Issue**: Deployment failing with "FATAL: password authentication failed for user 'salon_hub_api'"
+- **Root Cause**: `render.yaml` using `fromDatabase` reference instead of actual password value
+- **Solution**: Updated render.yaml to use explicit password value from verified credentials
+- **Result**: ✅ Database authentication should now work correctly
+- **Commit**: `b1b07c8` - "Fix: Use explicit database password in render.yaml"
+
 #### Render Deployment Configuration Fixes (July 2025)
 - **Issue**: Deployment failing on Render with database connection and health check issues
 - **Root Causes**: 
