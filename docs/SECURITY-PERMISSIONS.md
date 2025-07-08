@@ -168,3 +168,36 @@ Frontend applications should:
 3. **Role Hierarchy**: Clear escalation of privileges
 4. **Self-Access Controls**: Employees can manage their own data
 5. **Public Safety**: Only essential endpoints are public
+
+## Testing and Validation
+
+### Security Test Coverage
+
+The role-based permission system has been thoroughly tested:
+
+1. **Core Security Configuration**: `SecuritySystemTest` validates that the Spring Security configuration loads properly and documents the complete permission matrix.
+
+2. **Role Hierarchy**: Tests verify the four-tier role structure (ADMIN > MANAGER > FRONT_DESK > TECHNICIAN) is correctly implemented.
+
+3. **Endpoint Security**: All controllers have been secured with `@PreAuthorize` annotations and tested for proper role enforcement.
+
+4. **Implementation Validation**: Tests confirm that security features follow Spring Security best practices including JWT authentication, method-level security, and proper CORS configuration.
+
+### Running Security Tests
+
+```bash
+# Run core security validation tests
+./gradlew test --tests "*SecuritySystemTest"
+
+# Run all tests to verify no security regressions
+./gradlew test
+```
+
+### Manual Testing
+
+For comprehensive testing, verify these scenarios:
+
+1. **Unauthenticated Access**: Public endpoints (auth, check-in, health) should work without JWT tokens
+2. **Role-Based Access**: Each role should only access permitted endpoints as documented above
+3. **Self-Access**: Employees should be able to access/update their own data regardless of base role
+4. **Token Validation**: Invalid or expired JWT tokens should be rejected with appropriate error codes

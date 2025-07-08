@@ -124,6 +124,38 @@ Integration tests use Testcontainers with PostgreSQL for database testing.
 
 This allows for iterative development and gives the user control over when changes are persisted.
 
+## Documentation Guidelines
+
+**IMPORTANT**: Do NOT create new summary markdown files for every feature request.
+
+### Documentation Best Practices
+
+- **Update existing instructions**: When implementing new features or solving complex problems, update these Copilot instructions with helpful information for future development
+- **No feature summaries**: Avoid creating files like `FEATURE-SUMMARY.md`, `IMPLEMENTATION-SUMMARY.md` unless they serve a specific ongoing purpose
+- **Update existing docs**: Prefer updating existing documentation files in the `docs/` directory when relevant
+- **Focus on reusable knowledge**: Add patterns, troubleshooting steps, and best practices that will help with future similar tasks
+
+### When to Create New Documentation
+
+**Only create new documentation files when:**
+- **Architecture changes**: Significant system-wide changes that affect multiple components
+- **Security implementations**: Comprehensive security features that need detailed documentation for compliance/review
+- **Deployment guides**: New deployment processes or environment configurations
+- **API specifications**: Major API changes that need client documentation
+
+### Documentation File Organization
+
+```
+docs/
+├── README.md              # Project overview and quick start
+├── DEVELOPMENT.md         # Development setup and guidelines  
+├── DEPLOYMENT.md          # Deployment processes and environments
+├── SECURITY-PERMISSIONS.md # Security and permissions documentation
+└── [specific-feature].md  # Only for major architectural features
+```
+
+**Remember**: This instructions file is the primary place to document development patterns, troubleshooting steps, and coding standards for future reference.
+
 ## New Feature Testing Requirements
 
 **EVERY NEW FEATURE MUST INCLUDE COMPREHENSIVE TESTS**
@@ -681,3 +713,165 @@ Start-Process "http://localhost:8082/swagger-ui/index.html"
 - Console shows: `Started Application in X.X seconds`
 - API docs return HTTP 200: `http://localhost:8082/v3/api-docs`
 - Swagger UI loads: `http://localhost:8082/swagger-ui/index.html`
+
+## Security Implementation Guidelines
+
+**The SalonHub API implements a comprehensive role-based permission system using Spring Security and JWT authentication.**
+
+### Security Architecture
+
+#### **Role Hierarchy (Strict Inheritance)**
+```
+ADMIN > MANAGER > FRONT_DESK > TECHNICIAN
+```
+
+- **ADMIN**: Full system access, user management, all operations
+- **MANAGER**: All customer/appointment operations, employee management (below manager level)
+- **FRONT_DESK**: Customer operations, appointment scheduling, check-in management
+- **TECHNICIAN**: Read-only access to assigned appointments and customer info
+
+#### **Public Endpoints (No Authentication Required)**
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User authentication
+- `POST /api/checkin` - Customer check-in (public kiosk)
+- `GET /actuator/health` - Application health check
+- `GET /v3/api-docs/**` - API documentation (development only)
+- `GET /swagger-ui/**` - Swagger UI (development only)
+
+#### **Protected Endpoints (JWT + Role Required)**
+All other endpoints require valid JWT and appropriate role permissions.
+
+### Security Implementation Patterns
+
+#### **Controller Security Annotations**
+
+```java
+@PreAuthorize("hasRole('ADMIN')")  // Admin only
+@PreAuthorize("hasRole('MANAGER')")  // Manager and above
+@PreAuthorize("hasRole('FRONT_DESK')")  // Front desk and above
+@PreAuthorize("hasRole('TECHNICIAN')")  // All authenticated users
+
+// Self-access patterns for entity operations
+@PreAuthorize("hasRole('ADMIN') or (hasRole('EMPLOYEE') and #id == authentication.principal.employeeId)")
+@PreAuthorize("hasRole('FRONT_DESK') or (#customerId != null and #customerId == authentication.principal.customerId)")
+```
+
+#### **Security Configuration Class Structure**
+
+Located in `src/main/java/com/salonhub/api/auth/config/SecurityConfiguration.java`:
+
+```java
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+public class SecurityConfiguration {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+            .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/api/auth/**", "/api/checkin", "/actuator/health").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll() // Dev only
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
+    }
+}
+```
+
+### Security Testing Best Practices
+
+#### **Required Security Tests for All Controllers**
+
+1. **Authentication Tests**: Verify endpoints reject unauthenticated requests
+2. **Authorization Tests**: Verify role-based access control
+3. **Self-Access Tests**: Verify users can only access their own data
+4. **Cross-Role Tests**: Verify role inheritance works correctly
+5. **Edge Case Tests**: Invalid tokens, expired tokens, missing roles
+
+#### **Security Test Structure Example**
+
+```java
+@WebMvcTest(controllers = FeatureController.class)
+@Import(TestSecurityConfig.class)
+class FeatureControllerSecurityTest {
+    
+    @Test
+    void endpoint_withoutAuthentication_shouldReturn401() throws Exception {
+        mockMvc.perform(get("/api/features/1"))
+            .andExpect(status().isUnauthorized());
+    }
+    
+    @Test
+    @WithMockUser(roles = {"TECHNICIAN"})
+    void endpoint_withInsufficientRole_shouldReturn403() throws Exception {
+        mockMvc.perform(post("/api/features"))
+            .andExpect(status().isForbidden());
+    }
+    
+    @Test
+    @WithMockUser(roles = {"ADMIN"})
+    void endpoint_withAdminRole_shouldReturn200() throws Exception {
+        // Test implementation
+    }
+}
+```
+
+#### **System-Level Security Tests**
+
+Create comprehensive security validation tests:
+- `SecuritySystemTest`: Validates overall security configuration
+- `RoleBasedSecurityTest`: Tests role hierarchy and permissions
+- `AuthenticationFlowTest`: Tests login/logout and JWT handling
+
+### Security Configuration Files
+
+- **Main Config**: `SecurityConfiguration.java` - Production security settings
+- **Test Config**: `TestSecurityConfig.java` - Disables CSRF for API testing
+- **Permissions Documentation**: `docs/SECURITY-PERMISSIONS.md` - Complete permission matrix
+
+### Security Troubleshooting
+
+#### **Common Security Issues**
+
+1. **403 Forbidden on Valid Requests**
+   - Check `@PreAuthorize` annotation syntax
+   - Verify role names match exactly (case-sensitive)
+   - Ensure JWT contains correct roles claim
+
+2. **401 Unauthorized on Protected Endpoints**
+   - Check JWT token format and expiration
+   - Verify `Authorization: Bearer <token>` header
+   - Check JWT secret key configuration
+
+3. **Security Tests Failing**
+   - Import `TestSecurityConfig` for controller tests
+   - Use `@WithMockUser` for role simulation
+   - Disable CSRF for API testing with `@AutoConfigureTestDatabase`
+
+#### **Security Validation Commands**
+
+```powershell
+# Run all security tests
+.\gradlew.bat test --tests "*Security*"
+
+# Run system security validation
+.\gradlew.bat test --tests "SecuritySystemTest"
+
+# Run role-based permission tests
+.\gradlew.bat test --tests "RoleBasedSecurityTest"
+```
+
+### Security Best Practices Learned
+
+1. **Method-Level Security**: Use `@PreAuthorize` on controller methods for fine-grained control
+2. **Test Security Early**: Create security tests alongside feature implementation
+3. **Role Hierarchy**: Design clear role inheritance with specific permissions
+4. **Public Endpoint Minimization**: Only essential endpoints should be public
+5. **Self-Access Patterns**: Allow users to access their own data regardless of role
+6. **Documentation**: Maintain detailed permission matrix for all endpoints
+7. **JWT Configuration**: Ensure proper token validation and role extraction
+8. **Test Configuration**: Separate test security config for reliable testing
