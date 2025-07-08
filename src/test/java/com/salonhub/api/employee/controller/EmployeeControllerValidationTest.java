@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,11 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 // Load only EmployeeController and validation machinery
-@WebMvcTest(controllers = EmployeeController.class,
-    excludeAutoConfiguration = {
-        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
-    })
+@WebMvcTest(controllers = EmployeeController.class)
 @Import(com.salonhub.api.config.TestSecurityConfig.class)
 class EmployeeControllerValidationTest {
 
@@ -55,6 +52,7 @@ class EmployeeControllerValidationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("POST /api/employees with blank name => 400")
     void whenPostBlankName_thenBadRequest() throws Exception {
         EmployeeRequestDTO dto = new EmployeeRequestDTO();
@@ -69,6 +67,7 @@ class EmployeeControllerValidationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("PATCH availability with non-boolean => 400")
     void whenPatchInvalidBoolean_thenBadRequest() throws Exception {
       mockMvc.perform(patch("/api/employees/1/availability")
@@ -77,6 +76,7 @@ class EmployeeControllerValidationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("GET /api/employees/0 (ID ≤ 0) => 400")
     void whenGetWithZeroId_thenBadRequest() throws Exception {
         mockMvc.perform(get("/api/employees/0"))

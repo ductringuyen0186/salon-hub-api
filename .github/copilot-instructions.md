@@ -79,7 +79,7 @@ Integration tests use Testcontainers with PostgreSQL for database testing.
    ```
 2. Write failing tests first
 3. Implement feature
-4. Ensure all tests pass: `./gradlew check`
+4. **CRITICAL**: Ensure all tests pass: `./gradlew check` (ZERO failures required)
 5. **Run application with Docker** (automatically starts containers if not running):
    ```powershell
    # Smart startup script - checks if containers are running and starts them if needed
@@ -112,17 +112,84 @@ Integration tests use Testcontainers with PostgreSQL for database testing.
    ./gradlew bootRun
    ```
 6. **Never commit directly to main branch**
+7. **Never commit/push with failing tests**
 
 ## Git Commit Guidelines
 
-**IMPORTANT**: Only commit and push changes when explicitly requested in the chat conversation.
+**CRITICAL REQUIREMENT**: ALL TESTS MUST PASS before committing and pushing to GitHub.
+
+### Test Verification Before Commit
+
+**MANDATORY STEPS before any commit or push:**
+
+1. **Run full test suite**:
+   ```powershell
+   .\gradlew.bat check
+   ```
+   
+2. **Verify ZERO test failures**:
+   - Unit tests: 0 failures
+   - Security tests: 0 failures  
+   - Integration tests: 0 failures
+   
+3. **Fix any failing tests** before proceeding with commit/push
+
+4. **Only commit when all tests pass**
+
+### Commit Policy
+
+**IMPORTANT**: Only commit and push changes when explicitly requested in the chat conversation AND all tests pass.
 
 - **Default behavior**: Make code changes without committing
-- **Commit only when**: The user specifically asks to commit or push changes
-- **Auto-commit exceptions**: Critical fixes that break builds or tests may be committed immediately
+- **Commit only when**: The user specifically asks to commit or push changes AND `./gradlew check` shows 0 failures
+- **Auto-commit exceptions**: Critical fixes that break builds or tests may be committed immediately (after ensuring tests pass)
 - **Branch management**: Always work on feature branches, never directly on main
+- **Test gate**: Never commit/push with failing tests - this breaks CI/CD and blocks other developers
 
-This allows for iterative development and gives the user control over when changes are persisted.
+This allows for iterative development and gives the user control over when changes are persisted while maintaining code quality.
+
+## Documentation Guidelines
+
+**CRITICAL POLICY**: DO NOT create any summary, implementation, or feature documentation files.
+
+### Prohibited Documentation
+
+**NEVER create these types of files:**
+- `FEATURE-SUMMARY.md`
+- `IMPLEMENTATION-SUMMARY.md` 
+- `SECURITY-IMPLEMENTATION-SUMMARY.md`
+- `SECURITY-TEST-SUMMARY.md`
+- `*-SUMMARY.md` (any summary file)
+- `*-IMPLEMENTATION.md` (any implementation file)
+- Feature-specific markdown files unless explicitly requested
+
+### Documentation Best Practices
+
+- **Update existing instructions**: When implementing new features or solving complex problems, update these Copilot instructions with helpful information for future development
+- **Update existing docs**: Prefer updating existing documentation files in the `docs/` directory when relevant
+- **Focus on reusable knowledge**: Add patterns, troubleshooting steps, and best practices that will help with future similar tasks
+- **No new markdown files**: Do not create new markdown files for features, implementations, or summaries
+
+### When to Create New Documentation
+
+**Only create new documentation files when explicitly requested by the user for:**
+- **Architecture changes**: Significant system-wide changes that affect multiple components
+- **Security implementations**: Comprehensive security features that need detailed documentation for compliance/review (when explicitly requested)
+- **Deployment guides**: New deployment processes or environment configurations (when explicitly requested)
+- **API specifications**: Major API changes that need client documentation (when explicitly requested)
+
+### Documentation File Organization
+
+```
+docs/
+├── README.md              # Project overview and quick start
+├── DEVELOPMENT.md         # Development setup and guidelines  
+├── DEPLOYMENT.md          # Deployment processes and environments
+├── SECURITY-PERMISSIONS.md # Security and permissions documentation
+└── [specific-feature].md  # Only for major architectural features
+```
+
+**Remember**: This instructions file is the primary place to document development patterns, troubleshooting steps, and coding standards for future reference. DO NOT create additional documentation files for new features or implementations.
 
 ## New Feature Testing Requirements
 
@@ -681,3 +748,205 @@ Start-Process "http://localhost:8082/swagger-ui/index.html"
 - Console shows: `Started Application in X.X seconds`
 - API docs return HTTP 200: `http://localhost:8082/v3/api-docs`
 - Swagger UI loads: `http://localhost:8082/swagger-ui/index.html`
+
+## Security Implementation Guidelines
+
+**The SalonHub API implements a comprehensive role-based permission system using Spring Security and JWT authentication.**
+
+### Security Architecture
+
+#### **Role Hierarchy (Strict Inheritance)**
+```
+ADMIN > MANAGER > FRONT_DESK > TECHNICIAN
+```
+
+- **ADMIN**: Full system access, user management, all operations
+- **MANAGER**: All customer/appointment operations, employee management (below manager level)
+- **FRONT_DESK**: Customer operations, appointment scheduling, check-in management
+- **TECHNICIAN**: Read-only access to assigned appointments and customer info
+
+#### **Public Endpoints (No Authentication Required)**
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User authentication
+- `POST /api/checkin` - Customer check-in (public kiosk)
+- `GET /actuator/health` - Application health check
+- `GET /v3/api-docs/**` - API documentation (development only)
+- `GET /swagger-ui/**` - Swagger UI (development only)
+
+#### **Protected Endpoints (JWT + Role Required)**
+All other endpoints require valid JWT and appropriate role permissions.
+
+### Security Implementation Patterns
+
+#### **Controller Security Annotations**
+
+```java
+@PreAuthorize("hasRole('ADMIN')")  // Admin only
+@PreAuthorize("hasRole('MANAGER')")  // Manager and above
+@PreAuthorize("hasRole('FRONT_DESK')")  // Front desk and above
+@PreAuthorize("hasRole('TECHNICIAN')")  // All authenticated users
+
+// Self-access patterns for entity operations
+@PreAuthorize("hasRole('ADMIN') or (hasRole('EMPLOYEE') and #id == authentication.principal.employeeId)")
+@PreAuthorize("hasRole('FRONT_DESK') or (#customerId != null and #customerId == authentication.principal.customerId)")
+```
+
+#### **Security Configuration Class Structure**
+
+Located in `src/main/java/com/salonhub/api/auth/config/SecurityConfiguration.java`:
+
+```java
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+public class SecurityConfiguration {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+            .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/api/auth/**", "/api/checkin", "/actuator/health").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll() // Dev only
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
+    }
+}
+```
+
+### Security Testing Best Practices
+
+#### **Required Security Tests for All Controllers**
+
+1. **Authentication Tests**: Verify endpoints reject unauthenticated requests
+2. **Authorization Tests**: Verify role-based access control
+3. **Self-Access Tests**: Verify users can only access their own data
+4. **Cross-Role Tests**: Verify role inheritance works correctly
+5. **Edge Case Tests**: Invalid tokens, expired tokens, missing roles
+
+#### **Security Test Structure Example**
+
+```java
+@WebMvcTest(controllers = FeatureController.class)
+@Import(TestSecurityConfig.class)
+class FeatureControllerSecurityTest {
+    
+    @Test
+    void endpoint_withoutAuthentication_shouldReturn401() throws Exception {
+        mockMvc.perform(get("/api/features/1"))
+            .andExpect(status().isUnauthorized());
+    }
+    
+    @Test
+    @WithMockUser(roles = {"TECHNICIAN"})
+    void endpoint_withInsufficientRole_shouldReturn403() throws Exception {
+        mockMvc.perform(post("/api/features"))
+            .andExpect(status().isForbidden());
+    }
+    
+    @Test
+    @WithMockUser(roles = {"ADMIN"})
+    void endpoint_withAdminRole_shouldReturn200() throws Exception {
+        // Test implementation
+    }
+}
+```
+
+#### **System-Level Security Tests**
+
+Create comprehensive security validation tests:
+- `SecuritySystemTest`: Validates overall security configuration
+- `RoleBasedSecurityTest`: Tests role hierarchy and permissions
+- `AuthenticationFlowTest`: Tests login/logout and JWT handling
+
+### Security Configuration Files
+
+- **Main Config**: `SecurityConfiguration.java` - Production security settings
+- **Test Config**: `TestSecurityConfig.java` - Disables CSRF for API testing
+- **Permissions Documentation**: `docs/SECURITY-PERMISSIONS.md` - Complete permission matrix
+
+### Security Troubleshooting
+
+#### **Common Security Issues**
+
+1. **403 Forbidden on Valid Requests**
+   - Check `@PreAuthorize` annotation syntax
+   - Verify role names match exactly (case-sensitive)
+   - Ensure JWT contains correct roles claim
+
+2. **401 Unauthorized on Protected Endpoints**
+   - Check JWT token format and expiration
+   - Verify `Authorization: Bearer <token>` header
+   - Check JWT secret key configuration
+
+3. **Security Tests Failing**
+   - Import `TestSecurityConfig` for controller tests
+   - Use `@WithMockUser` for role simulation
+   - Disable CSRF for API testing with `@AutoConfigureTestDatabase`
+
+#### **Security Validation Commands**
+
+```powershell
+# Run all security tests
+.\gradlew.bat test --tests "*Security*"
+
+# Run system security validation
+.\gradlew.bat test --tests "SecuritySystemTest"
+
+# Run role-based permission tests
+.\gradlew.bat test --tests "RoleBasedSecurityTest"
+```
+
+### **Test Framework Patterns**
+
+#### **Security Test Behavior** 
+
+When testing with `@WebMvcTest` and MockMvc, Spring Security returns different status codes:
+
+- **No Authentication** (no `@WithMockUser`): Returns **403 Forbidden** for protected endpoints
+- **Insufficient Role** (wrong role in `@WithMockUser`): Returns **403 Forbidden** for role-protected endpoints  
+- **Correct Role** (valid role in `@WithMockUser`): Returns **200 OK** or appropriate success status
+
+**Important**: Tests expecting 401 (Unauthorized) should expect 403 (Forbidden) instead in MockMvc context.
+
+#### **Security Test Template**
+
+```java
+@WebMvcTest(ControllerClass.class)
+@Import(TestSecurityConfig.class)
+class ControllerSecurityTest {
+    
+    @Test
+    void endpoint_withoutAuth_shouldReturn403() throws Exception {
+        mockMvc.perform(get("/api/endpoint"))
+                .andExpect(status().isForbidden());  // 403, not 401
+    }
+    
+    @Test
+    @WithMockUser(roles = "INSUFFICIENT_ROLE")
+    void endpoint_withInsufficientRole_shouldReturn403() throws Exception {
+        mockMvc.perform(get("/api/endpoint"))
+                .andExpect(status().isForbidden());  // 403 for wrong role
+    }
+    
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void endpoint_withCorrectRole_shouldReturn200() throws Exception {
+        // Mock service behavior
+        when(service.method()).thenReturn(mockData);
+        
+        mockMvc.perform(get("/api/endpoint"))
+                .andExpect(status().isOk());  // 200 for success
+    }
+}
+```
+
+#### **SpEL Expression Issues**
+
+Some security expressions may fail in test context due to missing authentication principals. Ensure:
+- Use mock authentication principals when testing self-access patterns
+- Avoid complex SpEL expressions in tests without proper authentication context
+- Test method-level security with proper `@WithMockUser` setup
