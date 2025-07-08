@@ -5,7 +5,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate   # important: validate schema only
+      ddl-auto: create-drop   # Create tables for tests, drop after
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
