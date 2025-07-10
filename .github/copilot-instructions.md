@@ -950,3 +950,86 @@ Some security expressions may fail in test context due to missing authentication
 - Use mock authentication principals when testing self-access patterns
 - Avoid complex SpEL expressions in tests without proper authentication context
 - Test method-level security with proper `@WithMockUser` setup
+
+## API Overview & Documentation
+
+**SalonHub API provides comprehensive salon management functionality through well-defined REST endpoints:**
+
+### 🏗 **Core API Modules**
+
+#### **Check-in API (`/api/checkin`)**
+- **Primary Endpoint**: `POST /api/checkin` - Unified customer arrival handling
+- **Purpose**: Customer arrival registration and automatic queue entry
+- **Security**: Public (customer self-service) + Admin endpoints
+- **Integration**: Automatically adds customers to queue system
+
+#### **Queue API (`/api/queue`)**
+- **Primary Endpoints**: `GET /api/queue`, `PUT /api/queue/{id}/status`
+- **Purpose**: Service queue management and wait time tracking
+- **Security**: View (authenticated), Modify (FRONT_DESK+)
+- **Real-time**: Position updates and estimated wait times
+
+#### **Appointment API (`/api/appointments`)**
+- **Primary Endpoints**: `POST /api/appointments`, `GET /api/appointments`, `PUT /api/appointments/{id}`
+- **Purpose**: Formal service appointment scheduling and tracking
+- **Security**: Role-based access (TECHNICIAN view own, FRONT_DESK+ manage)
+- **Integration**: Links customers, employees, and service types
+
+#### **Service Types API (`/api/service-types`)**
+- **Primary Endpoints**: `GET /api/service-types`, `POST /api/service-types`, `PUT /api/service-types/{id}`
+- **Purpose**: Service catalog management with pricing and duration
+- **Security**: MANAGER/ADMIN only (business-critical)
+- **Impact**: Drives appointment creation and revenue calculations
+
+#### **Customer API (`/api/customers`)**
+- **Primary Endpoints**: `GET /api/customers`, `POST /api/customers`, `PUT /api/customers/{id}`
+- **Purpose**: Customer relationship management and profile tracking
+- **Security**: FRONT_DESK+ (customers can view own data)
+- **Features**: Guest vs registered customers, contact management
+
+#### **Employee API (`/api/employees`)**
+- **Primary Endpoints**: `GET /api/employees`, `POST /api/employees`, `PUT /api/employees/{id}`
+- **Purpose**: Staff management and availability tracking
+- **Security**: Role-dependent (self-view vs management)
+- **Features**: Role assignment, availability status
+
+#### **Authentication API (`/api/auth`)**
+- **Primary Endpoints**: `POST /api/auth/login`, `POST /api/auth/register`
+- **Purpose**: User authentication and JWT token management
+- **Security**: Public registration, protected endpoints via JWT
+- **Integration**: Provides role-based access control across all APIs
+
+### 📊 **API Documentation Standards**
+
+When documenting or creating APIs, always include:
+
+1. **WORKFLOW POSITION**: Where this API fits in the customer service flow
+2. **PURPOSE**: Clear business objective and functionality
+3. **SECURITY**: Role-based access requirements
+4. **PROCESS FLOW**: Step-by-step workflow description
+5. **INTEGRATION**: How it connects with other APIs
+6. **BUSINESS IMPACT**: Revenue, customer experience, or operational effects
+
+### 🔄 **API Integration Patterns**
+
+#### **Customer Journey Integration**:
+```
+Check-in → Queue → Appointment → Service → Completion
+   ↓        ↓        ↓           ↓         ↓
+Customer  Queue   Appointment  Employee  Customer
+  API      API       API        API       API
+```
+
+#### **Data Flow Integration**:
+- **Service Types** → **Appointments** (service selection)
+- **Employees** → **Appointments** (staff assignment)  
+- **Customers** → **Check-in** → **Queue** → **Appointments**
+- **Queue** → **Appointments** (service ready notification)
+
+### 🛡 **Security Patterns**
+
+- **Public APIs**: Check-in (customer self-service)
+- **Authenticated APIs**: Queue viewing, customer data access
+- **Staff APIs**: Queue management, appointment creation
+- **Management APIs**: Service types, employee management, business analytics
+- **Admin APIs**: User management, system configuration
