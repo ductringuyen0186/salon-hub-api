@@ -66,7 +66,7 @@ class AppointmentServiceImplTest {
         customer.setId(1L);
         employee = new Employee();
         employee.setId(2L);
-        serviceType = new ServiceType(3L, "Manicure", 30);
+        serviceType = new ServiceType(3L, "Manicure", 30, new java.math.BigDecimal("35.00"));
 
         request = new AppointmentRequestDTO();
         request.setCustomerId(1L);

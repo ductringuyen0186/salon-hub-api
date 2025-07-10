@@ -25,4 +25,7 @@ public class ServiceType {
 
     @Column(name = "estimated_duration_minutes", nullable = false)
     private Integer estimatedDurationMinutes;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private java.math.BigDecimal price;
 }
