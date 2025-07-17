@@ -4,6 +4,24 @@
 
 This file provides comprehensive development workflows, coding standards, and best practices for GitHub Copilot when working on the SalonHub API project.
 
+## 🚀 Quick Start for Copilot
+
+**CRITICAL: When user asks to run the application, ALWAYS use the smart startup scripts:**
+
+```powershell
+# Start application (most common request)
+.\start-app.ps1 -Local
+
+# Stop application  
+.\stop-app.ps1
+
+# Clean restart (when there are issues)
+.\stop-app.ps1 -Clean
+.\start-app.ps1 -Local
+```
+
+**These scripts automatically solve port conflicts and process management issues. DO NOT use manual gradlew commands unless specifically requested.**
+
 ## Project Structure
 
 Follow this exact structure for all new code:
@@ -615,116 +633,140 @@ docker-compose restart app
 
 ## Running the Application
 
-### **Recommended: Full Stack with Docker (Automatic)**
+### **CRITICAL: Use Smart Startup Scripts (Solves Port Conflicts)**
 
-**Single command to start everything (build + containers):**
+**The application now has smart startup scripts that automatically handle port conflicts and process management. ALWAYS use these scripts instead of manual commands.**
+
+### **Primary Method: Smart Startup Scripts**
+
+**Quick Local Development (Recommended):**
 ```powershell
-.\gradlew.bat bootJar; docker-compose up --build
+# One-click startup - handles all port conflicts automatically
+.\start-app.ps1 -Local
 ```
 
-**Smart startup (only starts containers if needed):**
+**Docker with PostgreSQL:**
 ```powershell
-# PowerShell script to check and start containers automatically
-$containers = docker ps --filter "name=salon-hub-api" --format "table {{.Names}}"
-if (-not ($containers -match "salon-hub-api-db-1" -and $containers -match "salon-hub-api-app-1")) {
-    Write-Host "Starting SalonHub containers..."
-    .\gradlew.bat bootJar
-    docker-compose up --build -d
-    Write-Host "Waiting for application to start..."
-    Start-Sleep -Seconds 20
-    Write-Host "Application should be ready at http://localhost:8082"
-} else {
-    Write-Host "Containers already running!"
-    docker ps --filter "name=salon-hub-api"
-}
+# Production-like environment with Docker
+.\start-app.ps1 -Docker
 ```
 
-**If application containers are restarting or failing:**
+**Interactive Mode:**
 ```powershell
-# Check container status first
-docker ps --filter "name=salon-hub-api"
+# Let user choose at runtime
+.\start-app.ps1
+```
 
-# If containers are restarting, check logs
-docker logs salon-hub-api-app-1 --tail 30
+**Safe Shutdown:**
+```powershell
+# Stop all processes and containers safely
+.\stop-app.ps1
 
-# Complete database reset (fixes Flyway migration and database connection issues)
-docker-compose down -v
-docker system prune -f
-docker volume prune -f
+# Stop with cleanup (removes Docker volumes)
+.\stop-app.ps1 -Clean
+```
+
+### **VS Code Integration**
+
+Use VS Code tasks via `Ctrl+Shift+P` → "Tasks: Run Task":
+- **SalonHub: Start Local (H2)** - Fast development with H2 database
+- **SalonHub: Start Docker (PostgreSQL)** - Production-like with PostgreSQL
+- **SalonHub: Stop All** - Safe shutdown of all processes
+- **SalonHub: Clean Restart** - Complete reset and restart
+
+### **One-Click Startup**
+
+```powershell
+# Double-click this file for instant startup
+.\quick-start.bat
+```
+
+### **Smart Script Features**
+
+The startup scripts automatically:
+- ✅ **Detect and kill Java processes** on port 8082
+- ✅ **Stop conflicting Docker containers** 
+- ✅ **Check port availability** before starting
+- ✅ **Handle restart after PC reboot** (no more port conflicts!)
+- ✅ **Provide colored status messages**
+- ✅ **Offer multiple startup modes**
+- ✅ **Include health checks and verification**
+
+### **After PC Restart (Common Problem Solved)**
+
+```powershell
+# Just run this - no more "port already in use" errors!
+.\start-app.ps1 -Local
+```
+
+### **Legacy Manual Methods (Deprecated - Use Scripts Instead)**
+
+**Only use these if the smart scripts fail:**
+
+#### Manual Docker Stack:
+```powershell
+# Stop everything first
+.\stop-app.ps1
+# Then start manually
 .\gradlew.bat bootJar
 docker-compose up --build
-
-# Wait for startup and verify
-Start-Sleep -Seconds 30
-Invoke-WebRequest -Uri "http://localhost:8082/v3/api-docs" -UseBasicParsing | Select-Object StatusCode
 ```
 
-### **Development Options**
-
-#### Option 1: Full Docker Stack (Recommended for testing)
+#### Manual Local Development:
 ```powershell
-# Complete rebuild and restart
-.\gradlew.bat bootJar
-docker-compose up --build
-
-# Background mode (non-blocking)
-.\gradlew.bat bootJar
-docker-compose up --build -d
-```
-
-#### Option 2: Local Spring Boot with Docker Database
-```powershell
-# Start only database container
-docker-compose up db -d
-
-# Run Spring Boot locally (connects to Docker database)
-.\gradlew.bat bootRun
-```
-
-#### Option 3: Quick Container Restart (after code changes)
-```powershell
-# Rebuild JAR and restart app container only
-.\gradlew.bat bootJar
-docker-compose restart app
-```
-
-### **Troubleshooting Container Issues**
+# Stop everything first  
+.\stop-app.ps1
+# Then start manually
+.\gradlew.bat bootRun --args='--spring.profiles.active=test'
+### **Troubleshooting with Smart Scripts**
 
 **Common Issues and Solutions:**
 
-#### 1. **Application Container Restarting**
+#### 1. **Still Getting Port Conflicts**
+```powershell
+# Nuclear option - stop everything
+.\stop-app.ps1 -Clean
+# Wait 10 seconds
+Start-Sleep -Seconds 10
+# Start fresh
+.\start-app.ps1 -Local
+```
+
+#### 2. **Check What's Running**
+```powershell
+# Check Java processes
+Get-Process -Name "java" -ErrorAction SilentlyContinue
+
+# Check port 8082 usage
+netstat -ano | findstr ":8082"
+
+# Check Docker containers
+docker ps
+```
+
+#### 3. **Manual Cleanup (Emergency)**
+```powershell
+# Kill all Java processes
+Get-Process -Name "java" | Stop-Process -Force
+
+# Stop all Docker containers
+docker stop $(docker ps -aq)
+docker system prune -f
+```
+
+#### 4. **Application Container Restarting**
 **Symptoms:** Container shows `Restarting (1) Less than a second ago`
 **Cause:** Usually database connection issues or Flyway migration problems
 
 **Solution:**
 ```powershell
-# Check application logs for specific error
+# Use clean restart script
+.\stop-app.ps1 -Clean
+.\start-app.ps1 -Docker
+
+# Or check application logs for specific error
 docker logs salon-hub-api-app-1 --tail 50
-
-# If you see "Communications link failure" or Flyway errors:
-docker-compose down -v
-docker system prune -f
-docker volume prune -f
-.\gradlew.bat bootJar
-docker-compose up --build
 ```
-
-#### 2. **Database Connection Timeout**
-**Symptoms:** `Unable to obtain connection from database: Communications link failure`
-**Cause:** Application starts before database is fully initialized
-
-**Solution:**
-```powershell
-# Stop and restart with proper timing
-docker-compose down
-docker-compose up db -d
-Start-Sleep -Seconds 15  # Wait for database
-docker-compose up app
-```
-
-#### 3. **Flyway Migration Issues**
-**Symptoms:** `Migration checksum mismatch` or `Detected failed migration`
-**Cause:** Migration files modified or database in inconsistent state
 
 **Solution:** Use complete database reset (see Flyway section above)
 

@@ -9,14 +9,64 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(
+    name = "🔐 Authentication", 
+    description = """
+        User registration and authentication endpoints.
+        
+        **Public Endpoints**: No authentication required for these endpoints.
+        
+        **How to use JWT tokens:**
+        1. Register a new account or login with existing credentials
+        2. Copy the `token` from the response
+        3. Use the token in the Authorization header: `Bearer your-jwt-token`
+        4. Or use the 🔒 **Authorize** button in Swagger UI
+        """
+)
 public class AuthenticationController {
 
     private final AuthenticationService service;
 
     @PostMapping("/register")
+    @Operation(
+        summary = "📝 Register New User",
+        description = """
+            Create a new user account in the system.
+            
+            **Public Endpoint**: No authentication required
+            
+            **Returns**: JWT token and user information for immediate login
+            """,
+        responses = {
+            @ApiResponse(
+                responseCode = "200", 
+                description = "✅ Registration successful",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                        value = """
+                            {
+                              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                              "email": "user@example.com",
+                              "role": "CUSTOMER",
+                              "name": "John Doe"
+                            }
+                            """
+                    )
+                )
+            ),
+            @ApiResponse(responseCode = "400", description = "❌ Registration failed - Email already exists or invalid data")
+        }
+    )
     public ResponseEntity<AuthenticationResponse> register(
             @RequestBody @Valid RegisterRequest request
     ) {
@@ -28,6 +78,44 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
+    @Operation(
+        summary = "🔓 User Login",
+        description = """
+            Authenticate user and receive JWT token for API access.
+            
+            **Public Endpoint**: No authentication required
+            
+            **Usage after login:**
+            1. Copy the `token` from the response
+            2. Include in requests: `Authorization: Bearer your-token`
+            3. Or use 🔒 **Authorize** button in Swagger UI
+            
+            **Test Credentials** (for development):
+            - Admin: `admin@salonhub.com` / `admin123`
+            - Manager: `manager@salonhub.com` / `manager123`
+            - Front Desk: `frontdesk@salonhub.com` / `frontdesk123`
+            """,
+        responses = {
+            @ApiResponse(
+                responseCode = "200", 
+                description = "✅ Login successful - Copy the token for API access",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                        value = """
+                            {
+                              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                              "email": "admin@salonhub.com",
+                              "role": "ADMIN",
+                              "name": "Admin User"
+                            }
+                            """
+                    )
+                )
+            ),
+            @ApiResponse(responseCode = "400", description = "❌ Invalid credentials")
+        }
+    )
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody @Valid AuthenticationRequest request
     ) {
