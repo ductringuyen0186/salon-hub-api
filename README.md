@@ -16,13 +16,20 @@ A modern REST API for salon management, built with Spring Boot and PostgreSQL.
 git clone <repository-url>
 cd salon-hub-api
 
-# Start the application with Docker
-.\gradlew.bat bootJar
-docker-compose up --build
+# Quick start (recommended) - handles port conflicts automatically
+.\start-app.ps1 -Local
 
-# Or run locally (requires PostgreSQL)
-.\gradlew.bat bootRun
+# Or with Docker + PostgreSQL
+.\start-app.ps1 -Docker
+
+# Stop the application
+.\stop-app.ps1
 ```
+
+### 📚 Documentation
+- **[Development Guide](docs/DEVELOPMENT.md)** - Complete setup guide with smart scripts
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
+- **[Security & Permissions](docs/SECURITY-PERMISSIONS.md)** - API security documentation
 
 ### API Documentation
 - **Swagger UI**: `http://localhost:8082/swagger-ui/index.html`

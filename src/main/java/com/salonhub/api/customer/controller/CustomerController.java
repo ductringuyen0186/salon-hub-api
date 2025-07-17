@@ -22,6 +22,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.List;
 
 /**
@@ -33,6 +39,20 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/customers")
+@Tag(
+    name = "👥 Customer Management", 
+    description = """
+        Manage salon customers including both registered users and walk-in guests.
+        
+        **Authentication Required**: All endpoints require valid JWT token
+        
+        **Role Requirements**:
+        - **View customers**: FRONT_DESK, MANAGER, ADMIN
+        - **Create customers**: FRONT_DESK, MANAGER, ADMIN  
+        - **Update customers**: MANAGER, ADMIN
+        - **Delete customers**: ADMIN only
+        """
+)
 public class CustomerController {
 
     private final CustomerService service;
@@ -44,6 +64,22 @@ public class CustomerController {
     }
 
     @GetMapping
+    @Operation(
+        summary = "📋 Get All Customers",
+        description = """
+            Retrieve a list of all customers in the system.
+            
+            **Required Role**: FRONT_DESK, MANAGER, or ADMIN
+            
+            **Returns**: List of customer information including contact details and guest status
+            """,
+        responses = {
+            @ApiResponse(responseCode = "200", description = "✅ Successfully retrieved customers"),
+            @ApiResponse(responseCode = "401", description = "🔒 Authentication required - Please login first"),
+            @ApiResponse(responseCode = "403", description = "⛔ Insufficient permissions - Requires FRONT_DESK+ role")
+        }
+    )
+    @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("hasAnyRole('FRONT_DESK', 'MANAGER', 'ADMIN')")
     public List<CustomerResponseDTO> list() {
         return service.findAll()
