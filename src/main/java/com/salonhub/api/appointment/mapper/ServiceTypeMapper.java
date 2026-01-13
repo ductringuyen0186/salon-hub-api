@@ -21,6 +21,10 @@ public class ServiceTypeMapper {
                 .name(serviceType.getName())
                 .estimatedDurationMinutes(serviceType.getEstimatedDurationMinutes())
                 .price(serviceType.getPrice())
+                .description(serviceType.getDescription())
+                .category(serviceType.getCategory())
+                .popular(serviceType.getPopular())
+                .active(serviceType.getActive())
                 .build();
     }
     
@@ -32,12 +36,15 @@ public class ServiceTypeMapper {
             return null;
         }
         
-        return new ServiceType(
-                null, // ID will be generated
-                requestDTO.getName().trim(),
-                requestDTO.getEstimatedDurationMinutes(),
-                requestDTO.getPrice()
-        );
+        ServiceType serviceType = new ServiceType();
+        serviceType.setName(requestDTO.getName().trim());
+        serviceType.setEstimatedDurationMinutes(requestDTO.getEstimatedDurationMinutes());
+        serviceType.setPrice(requestDTO.getPrice());
+        serviceType.setDescription(requestDTO.getDescription());
+        serviceType.setCategory(requestDTO.getCategory());
+        serviceType.setPopular(requestDTO.getPopular() != null ? requestDTO.getPopular() : false);
+        serviceType.setActive(requestDTO.getActive() != null ? requestDTO.getActive() : true);
+        return serviceType;
     }
     
     /**
@@ -51,5 +58,13 @@ public class ServiceTypeMapper {
         existingServiceType.setName(requestDTO.getName().trim());
         existingServiceType.setEstimatedDurationMinutes(requestDTO.getEstimatedDurationMinutes());
         existingServiceType.setPrice(requestDTO.getPrice());
+        existingServiceType.setDescription(requestDTO.getDescription());
+        existingServiceType.setCategory(requestDTO.getCategory());
+        if (requestDTO.getPopular() != null) {
+            existingServiceType.setPopular(requestDTO.getPopular());
+        }
+        if (requestDTO.getActive() != null) {
+            existingServiceType.setActive(requestDTO.getActive());
+        }
     }
 }

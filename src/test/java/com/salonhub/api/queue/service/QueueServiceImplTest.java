@@ -40,6 +40,9 @@ class QueueServiceImplTest {
     @Mock
     private EmployeeRepository employeeRepository;
 
+    @Mock
+    private QueueNotificationService notificationService;
+
     @InjectMocks
     private QueueServiceImpl queueService;
 

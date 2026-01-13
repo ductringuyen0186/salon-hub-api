@@ -14,37 +14,70 @@ public class ServiceTypeTestDataBuilder {
     private String name;
     private Integer estimatedDurationMinutes;
     private BigDecimal price;
+    private String description;
+    private String category;
+    private Boolean popular = false;
+    private Boolean active = true;
     
     public static ServiceTypeTestDataBuilder aServiceType() {
         return new ServiceTypeTestDataBuilder()
                 .withId(1L)
                 .withName("Test Service")
                 .withEstimatedDurationMinutes(30)
-                .withPrice(new BigDecimal("25.00"));
+                .withPrice(new BigDecimal("25.00"))
+                .withDescription("Test service description")
+                .withCategory("Test Category")
+                .withPopular(false)
+                .withActive(true);
     }
     
-    public static ServiceTypeTestDataBuilder aHaircut() {
+    public static ServiceTypeTestDataBuilder aSignatureManicure() {
         return new ServiceTypeTestDataBuilder()
-                .withId(ServiceTypeDatabaseDefault.HAIRCUT_ID)
-                .withName(ServiceTypeDatabaseDefault.HAIRCUT_NAME)
-                .withEstimatedDurationMinutes(ServiceTypeDatabaseDefault.HAIRCUT_DURATION)
-                .withPrice(ServiceTypeDatabaseDefault.HAIRCUT_PRICE);
+                .withId(ServiceTypeDatabaseDefault.SIGNATURE_MANICURE_ID)
+                .withName(ServiceTypeDatabaseDefault.SIGNATURE_MANICURE_NAME)
+                .withEstimatedDurationMinutes(ServiceTypeDatabaseDefault.SIGNATURE_MANICURE_DURATION)
+                .withPrice(ServiceTypeDatabaseDefault.SIGNATURE_MANICURE_PRICE)
+                .withDescription(ServiceTypeDatabaseDefault.SIGNATURE_MANICURE_DESCRIPTION)
+                .withCategory(ServiceTypeDatabaseDefault.MANICURE_CATEGORY)
+                .withPopular(true)
+                .withActive(true);
+    }
+    
+    public static ServiceTypeTestDataBuilder anExpressManicure() {
+        return new ServiceTypeTestDataBuilder()
+                .withId(ServiceTypeDatabaseDefault.EXPRESS_MANICURE_ID)
+                .withName(ServiceTypeDatabaseDefault.EXPRESS_MANICURE_NAME)
+                .withEstimatedDurationMinutes(ServiceTypeDatabaseDefault.EXPRESS_MANICURE_DURATION)
+                .withPrice(ServiceTypeDatabaseDefault.EXPRESS_MANICURE_PRICE)
+                .withDescription(ServiceTypeDatabaseDefault.EXPRESS_MANICURE_DESCRIPTION)
+                .withCategory(ServiceTypeDatabaseDefault.MANICURE_CATEGORY)
+                .withPopular(false)
+                .withActive(true);
+    }
+    
+    public static ServiceTypeTestDataBuilder aDeluxePedicure() {
+        return new ServiceTypeTestDataBuilder()
+                .withId(ServiceTypeDatabaseDefault.DELUXE_PEDICURE_ID)
+                .withName(ServiceTypeDatabaseDefault.DELUXE_PEDICURE_NAME)
+                .withEstimatedDurationMinutes(ServiceTypeDatabaseDefault.DELUXE_PEDICURE_DURATION)
+                .withPrice(ServiceTypeDatabaseDefault.DELUXE_PEDICURE_PRICE)
+                .withDescription(ServiceTypeDatabaseDefault.DELUXE_PEDICURE_DESCRIPTION)
+                .withCategory(ServiceTypeDatabaseDefault.PEDICURE_CATEGORY)
+                .withPopular(true)
+                .withActive(true);
+    }
+    
+    // Legacy methods for backward compatibility
+    public static ServiceTypeTestDataBuilder aHaircut() {
+        return aSignatureManicure();
     }
     
     public static ServiceTypeTestDataBuilder aHairColor() {
-        return new ServiceTypeTestDataBuilder()
-                .withId(ServiceTypeDatabaseDefault.HAIR_COLOR_ID)
-                .withName(ServiceTypeDatabaseDefault.HAIR_COLOR_NAME)
-                .withEstimatedDurationMinutes(ServiceTypeDatabaseDefault.HAIR_COLOR_DURATION)
-                .withPrice(ServiceTypeDatabaseDefault.HAIR_COLOR_PRICE);
+        return anExpressManicure();
     }
     
     public static ServiceTypeTestDataBuilder aManicure() {
-        return new ServiceTypeTestDataBuilder()
-                .withId(ServiceTypeDatabaseDefault.MANICURE_ID)
-                .withName(ServiceTypeDatabaseDefault.MANICURE_NAME)
-                .withEstimatedDurationMinutes(ServiceTypeDatabaseDefault.MANICURE_DURATION)
-                .withPrice(ServiceTypeDatabaseDefault.MANICURE_PRICE);
+        return aDeluxePedicure();
     }
     
     public ServiceTypeTestDataBuilder withId(Long id) {
@@ -67,8 +100,37 @@ public class ServiceTypeTestDataBuilder {
         return this;
     }
     
+    public ServiceTypeTestDataBuilder withDescription(String description) {
+        this.description = description;
+        return this;
+    }
+    
+    public ServiceTypeTestDataBuilder withCategory(String category) {
+        this.category = category;
+        return this;
+    }
+    
+    public ServiceTypeTestDataBuilder withPopular(Boolean popular) {
+        this.popular = popular;
+        return this;
+    }
+    
+    public ServiceTypeTestDataBuilder withActive(Boolean active) {
+        this.active = active;
+        return this;
+    }
+    
     public ServiceType build() {
-        return new ServiceType(id, name, estimatedDurationMinutes, price);
+        ServiceType serviceType = new ServiceType();
+        serviceType.setId(id);
+        serviceType.setName(name);
+        serviceType.setEstimatedDurationMinutes(estimatedDurationMinutes);
+        serviceType.setPrice(price);
+        serviceType.setDescription(description);
+        serviceType.setCategory(category);
+        serviceType.setPopular(popular);
+        serviceType.setActive(active);
+        return serviceType;
     }
     
     public ServiceTypeRequestDTO buildRequestDTO() {
@@ -76,6 +138,10 @@ public class ServiceTypeTestDataBuilder {
                 .name(name)
                 .estimatedDurationMinutes(estimatedDurationMinutes)
                 .price(price)
+                .description(description)
+                .category(category)
+                .popular(popular)
+                .active(active)
                 .build();
     }
 }

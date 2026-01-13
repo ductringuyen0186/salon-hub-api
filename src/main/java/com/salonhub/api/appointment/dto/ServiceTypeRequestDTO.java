@@ -27,4 +27,14 @@ public class ServiceTypeRequestDTO {
     @NotNull(message = "Price is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
     private BigDecimal price;
+
+    private String description;
+
+    private String category;
+
+    @Builder.Default
+    private Boolean popular = false;
+
+    @Builder.Default
+    private Boolean active = true;
 }

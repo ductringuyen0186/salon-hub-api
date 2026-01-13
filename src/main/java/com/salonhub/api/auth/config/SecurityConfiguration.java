@@ -40,7 +40,13 @@ public class SecurityConfiguration {
                                         // Check-in endpoints (public for customers and guests)
                                         "/api/checkin",
                                         "/api/checkin/existing",
-                                        "/api/checkin/guest", 
+                                        "/api/checkin/guest",
+                                        // Service types (public for viewing)
+                                        "/api/service-types",
+                                        "/api/service-types/**",
+                                        // WebSocket endpoints (authentication happens at STOMP level)
+                                        "/ws/**",
+                                        "/ws-raw/**",
                                         // Health check (public)
                                         "/actuator/health",
                                         // API documentation (consider restricting in production)

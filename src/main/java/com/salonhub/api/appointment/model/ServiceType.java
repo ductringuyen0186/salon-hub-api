@@ -28,4 +28,26 @@ public class ServiceType {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private java.math.BigDecimal price;
+
+    @Column(length = 500)
+    private String description;
+
+    @Column(length = 100)
+    private String category;
+
+    @Column(nullable = false)
+    private Boolean popular = false;
+
+    @Column(nullable = false)
+    private Boolean active = true;
+
+    // Constructor for backward compatibility (without new fields)
+    public ServiceType(Long id, String name, Integer estimatedDurationMinutes, java.math.BigDecimal price) {
+        this.id = id;
+        this.name = name;
+        this.estimatedDurationMinutes = estimatedDurationMinutes;
+        this.price = price;
+        this.popular = false;
+        this.active = true;
+    }
 }

@@ -17,4 +17,8 @@ public class ServiceTypeResponseDTO {
     private String name;
     private Integer estimatedDurationMinutes;
     private BigDecimal price;
+    private String description;
+    private String category;
+    private Boolean popular;
+    private Boolean active;
 }

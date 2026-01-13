@@ -25,6 +25,7 @@ public class QueueServiceImpl implements QueueService {
     private final QueueRepository queueRepository;
     private final CustomerRepository customerRepository;
     private final EmployeeRepository employeeRepository;
+    private final QueueNotificationService notificationService;
     
     @Override
     @Transactional
@@ -41,7 +42,12 @@ public class QueueServiceImpl implements QueueService {
             queueEntry.setEstimatedWaitTime(calculateEstimatedWaitTime());
         }
         
-        return queueRepository.save(queueEntry);
+        Queue saved = queueRepository.save(queueEntry);
+        
+        // Broadcast queue update via WebSocket
+        broadcastQueueUpdate();
+        
+        return saved;
     }
     
     @Override
@@ -88,6 +94,9 @@ public class QueueServiceImpl implements QueueService {
             updateQueuePositions();
         }
         
+        // Broadcast queue update via WebSocket
+        broadcastQueueUpdate();
+        
         return convertToDTO(saved);
     }
     
@@ -96,6 +105,10 @@ public class QueueServiceImpl implements QueueService {
     public void removeFromQueue(Long id) {
         queueRepository.deleteById(id);
         updateQueuePositions();
+        
+        // Broadcast queue update via WebSocket
+        notificationService.broadcastEntryRemoved(id);
+        broadcastQueueUpdate();
     }
     
     @Override
@@ -108,6 +121,10 @@ public class QueueServiceImpl implements QueueService {
         Queue saved = queueRepository.save(queue);
         
         updateQueuePositions();
+        
+        // Broadcast queue update via WebSocket
+        broadcastQueueUpdate();
+        
         return convertToDTO(saved);
     }
     
@@ -205,5 +222,19 @@ public class QueueServiceImpl implements QueueService {
         }
         
         return dto;
+    }
+    
+    /**
+     * Broadcast the current queue state to all WebSocket subscribers.
+     */
+    private void broadcastQueueUpdate() {
+        try {
+            List<QueueEntryDTO> currentQueue = getCurrentQueue();
+            notificationService.broadcastQueueUpdate(currentQueue);
+            notificationService.broadcastQueueStats(getQueueStatistics());
+        } catch (Exception e) {
+            // Log but don't fail the main operation if broadcast fails
+            // This could happen if WebSocket infrastructure isn't ready
+        }
     }
 }
