@@ -110,8 +110,11 @@ public class CustomerController {
             .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Create a new customer
+     * PUBLIC endpoint - used by check-in page for guest registration
+     */
     @PostMapping
-    @PreAuthorize("hasAnyRole('FRONT_DESK', 'MANAGER', 'ADMIN')")
     public ResponseEntity<CustomerResponseDTO> create(
         @RequestBody @Valid CustomerRequestDTO dto
     ) {

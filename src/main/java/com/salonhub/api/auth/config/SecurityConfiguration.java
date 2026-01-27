@@ -41,6 +41,10 @@ public class SecurityConfiguration {
                                         "/api/checkin",
                                         "/api/checkin/existing",
                                         "/api/checkin/guest",
+                                        // Queue stats (public for check-in page to show wait times)
+                                        "/api/queue/stats",
+                                        // Employees list (public for technician selection at check-in)
+                                        "/api/employees",
                                         // Service types (public for viewing)
                                         "/api/service-types",
                                         "/api/service-types/**",
@@ -54,13 +58,14 @@ public class SecurityConfiguration {
                                         "/swagger-ui/**",
                                         "/swagger-ui.html"
                                 ).permitAll()
-                                // Customer management - FRONT_DESK and above
+                                // Customer management - POST is public for guest check-in, others need auth
+                                .requestMatchers(HttpMethod.POST, "/api/customers").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
-                                .requestMatchers(HttpMethod.POST, "/api/customers").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/api/customers/**").hasAnyRole("MANAGER", "ADMIN")
                                 .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("ADMIN")
-                                // Employee management - MANAGER and above (with method-level security for self-access)
-                                .requestMatchers(HttpMethod.GET, "/api/employees").hasAnyRole("MANAGER", "ADMIN")
+                                // Employee management - List is public for technician selection, specific endpoints need auth
+                                .requestMatchers(HttpMethod.GET, "/api/employees").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/employees/**").hasAnyRole("TECHNICIAN", "FRONT_DESK", "MANAGER", "ADMIN")
                                 .requestMatchers(HttpMethod.POST, "/api/employees").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/api/employees/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.DELETE, "/api/employees/**").hasRole("ADMIN")
@@ -71,7 +76,8 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.PUT, "/api/appointments/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
                                 .requestMatchers(HttpMethod.DELETE, "/api/appointments/**").hasAnyRole("MANAGER", "ADMIN")
                                 .requestMatchers("/api/appointments/**").hasAnyRole("TECHNICIAN", "FRONT_DESK", "MANAGER", "ADMIN")
-                                // Queue management - FRONT_DESK and above for modifications, all authenticated for viewing
+                                // Queue management - stats is public (for check-in page), other GETs need auth
+                                .requestMatchers(HttpMethod.GET, "/api/queue/stats").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/queue/**").authenticated()
                                 .requestMatchers(HttpMethod.PUT, "/api/queue/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")
                                 .requestMatchers(HttpMethod.DELETE, "/api/queue/**").hasAnyRole("FRONT_DESK", "MANAGER", "ADMIN")

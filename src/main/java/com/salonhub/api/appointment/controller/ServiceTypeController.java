@@ -31,9 +31,9 @@ public class ServiceTypeController {
     
     /**
      * Get all service types
+     * PUBLIC endpoint - used by check-in page for service selection
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<List<ServiceTypeResponseDTO>> getAllServiceTypes() {
         List<ServiceTypeResponseDTO> serviceTypes = service.findAll();
         return ResponseEntity.ok(serviceTypes);
@@ -41,9 +41,9 @@ public class ServiceTypeController {
     
     /**
      * Get service type by ID
+     * PUBLIC endpoint - used for viewing service details
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<ServiceTypeResponseDTO> getServiceTypeById(
             @PathVariable @Positive(message = "ID must be a positive number") Long id) {
         return service.findById(id)

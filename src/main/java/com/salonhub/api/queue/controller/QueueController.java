@@ -98,9 +98,9 @@ public class QueueController {
     
     /**
      * Get queue statistics
+     * PUBLIC endpoint - used by check-in page to show wait times
      */
     @GetMapping("/stats")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<QueueService.QueueStatistics> getQueueStatistics() {
         QueueService.QueueStatistics stats = queueService.getQueueStatistics();
         return ResponseEntity.ok(stats);

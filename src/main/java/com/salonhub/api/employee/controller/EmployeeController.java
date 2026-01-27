@@ -48,8 +48,11 @@ public class EmployeeController {
         this.mapper = mapper;
     }
 
+    /**
+     * List all employees
+     * PUBLIC endpoint - used by check-in page for technician selection
+     */
     @GetMapping
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public List<EmployeeResponseDTO> list() {
         return service.findAll()
                       .stream()
