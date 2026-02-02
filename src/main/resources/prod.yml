@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${DATABASE_JDBC_URL:jdbc:postgresql://dpg-d5tdk9qli9vc73a64s7g-a.oregon-postgres.render.com:5432/salon_hub_db}
+    url: ${DATABASE_JDBC_URL:jdbc:postgresql://dpg-d5tdk9qli9vc73a64s7g-a.oregon-postgres.render.com:5432/salon_hub_db?sslmode=require}
     username: ${DB_USERNAME:salon_hub_db_user}
     password: ${DB_PASSWORD:QBWod9kEt9K3ZyiQ9nZOGvRN1XijA119}
     driver-class-name: org.postgresql.Driver
@@ -12,14 +12,14 @@ spring:
       connection-timeout: 60000
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true
+      ddl-auto: update
+    show-sql: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
         format_sql: false
   flyway:
-    enabled: false
+    enabled: true
     baseline-on-migrate: true
     validate-on-migrate: true
     locations: classpath:db/migration
