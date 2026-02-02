@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${DATABASE_JDBC_URL:jdbc:postgresql://dpg-d5tdk9qli9vc73a64s7g-a:5432/salon_hub_db}
+    url: ${DATABASE_JDBC_URL:jdbc:postgresql://dpg-d5tdk9qli9vc73a64s7g-a/salon_hub_db}
     username: ${DB_USERNAME:salon_hub_db_user}
     password: ${DB_PASSWORD:QBWod9kEt9K3ZyiQ9nZOGvRN1XijA119}
     driver-class-name: org.postgresql.Driver
