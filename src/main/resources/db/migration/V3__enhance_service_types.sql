@@ -6,8 +6,7 @@ ALTER TABLE service_types ADD COLUMN category VARCHAR(100);
 ALTER TABLE service_types ADD COLUMN popular BOOLEAN DEFAULT FALSE NOT NULL;
 ALTER TABLE service_types ADD COLUMN active BOOLEAN DEFAULT TRUE NOT NULL;
 
--- Add unique constraint on name for MERGE operations
-ALTER TABLE service_types ADD CONSTRAINT uk_service_types_name UNIQUE (name);
+-- Note: name column already has UNIQUE constraint from V1 (service_types_name_key)
 
 -- Create index on category for faster filtering
 CREATE INDEX idx_service_types_category ON service_types(category);
