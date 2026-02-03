@@ -47,7 +47,7 @@ class AuthenticationControllerSecurityTest {
         request.setPassword("password123");
         request.setName("Test User");
         request.setPhoneNumber("1234567890");
-        request.setRole(User.Role.EMPLOYEE);
+        request.setRole(User.Role.FRONT_DESK);
         return request;
     }
 
@@ -65,7 +65,7 @@ class AuthenticationControllerSecurityTest {
         response.setName("Test User");
         response.setEmail("test@example.com");
         response.setPhoneNumber("1234567890");
-        response.setRole(User.Role.EMPLOYEE);
+        response.setRole(User.Role.FRONT_DESK);
         response.setLastVisit(LocalDateTime.now());
         return response;
     }
@@ -76,7 +76,7 @@ class AuthenticationControllerSecurityTest {
                 .email("test@example.com")
                 .name("Test User")
                 .phoneNumber("1234567890")
-                .role(User.Role.EMPLOYEE)
+                .role(User.Role.FRONT_DESK)
                 .enabled(true)
                 .build();
     }

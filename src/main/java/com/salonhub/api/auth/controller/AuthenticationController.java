@@ -4,14 +4,18 @@ import com.salonhub.api.auth.dto.AuthenticationRequest;
 import com.salonhub.api.auth.dto.AuthenticationResponse;
 import com.salonhub.api.auth.dto.RegisterRequest;
 import com.salonhub.api.auth.service.AuthenticationService;
+import com.salonhub.api.common.dto.ErrorResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -64,17 +68,19 @@ public class AuthenticationController {
                     )
                 )
             ),
-            @ApiResponse(responseCode = "400", description = "❌ Registration failed - Email already exists or invalid data")
+            @ApiResponse(responseCode = "400", description = "❌ Registration failed - Email already exists or invalid data",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class)
+                )
+            )
         }
     )
     public ResponseEntity<AuthenticationResponse> register(
             @RequestBody @Valid RegisterRequest request
     ) {
-        try {
-            return ResponseEntity.ok(service.register(request));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        // Let exceptions propagate to GlobalExceptionHandler for proper error messages
+        return ResponseEntity.ok(service.register(request));
     }
 
     @PostMapping("/login")
@@ -113,17 +119,19 @@ public class AuthenticationController {
                     )
                 )
             ),
-            @ApiResponse(responseCode = "400", description = "❌ Invalid credentials")
+            @ApiResponse(responseCode = "400", description = "❌ Invalid credentials",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class)
+                )
+            )
         }
     )
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody @Valid AuthenticationRequest request
     ) {
-        try {
-            return ResponseEntity.ok(service.authenticate(request));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+        // Let exceptions propagate to GlobalExceptionHandler for proper error messages
+        return ResponseEntity.ok(service.authenticate(request));
     }
 
     @GetMapping("/me")

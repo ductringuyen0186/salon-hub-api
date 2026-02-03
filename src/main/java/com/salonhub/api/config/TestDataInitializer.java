@@ -5,20 +5,18 @@ import com.salonhub.api.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
- * Data initializer for development and testing environments.
- * Creates default users for Swagger authentication testing.
+ * Data initializer for all environments.
+ * Creates default users for authentication.
  * 
- * Only runs in 'test' and 'h2' profiles for safety.
+ * Runs on startup to ensure test/demo users exist.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"test", "h2", "dev"}) // Only run in development/test environments
 public class TestDataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -30,8 +28,9 @@ public class TestDataInitializer implements CommandLineRunner {
             log.info("🚀 Initializing test users for Swagger authentication...");
             
             createTestUser("admin@salonhub.com", "admin123", "Admin User", User.Role.ADMIN);
-            createTestUser("manager@salonhub.com", "manager123", "Manager User", User.Role.EMPLOYEE);
-            createTestUser("frontdesk@salonhub.com", "frontdesk123", "Front Desk User", User.Role.EMPLOYEE);
+            createTestUser("manager@salonhub.com", "manager123", "Manager User", User.Role.MANAGER);
+            createTestUser("frontdesk@salonhub.com", "frontdesk123", "Front Desk User", User.Role.FRONT_DESK);
+            createTestUser("technician@salonhub.com", "technician123", "Technician User", User.Role.TECHNICIAN);
             createTestUser("customer@salonhub.com", "customer123", "Test Customer", User.Role.CUSTOMER);
             
             log.info("✅ Test users created successfully!");
@@ -39,6 +38,7 @@ public class TestDataInitializer implements CommandLineRunner {
             log.info("   Admin: admin@salonhub.com / admin123");
             log.info("   Manager: manager@salonhub.com / manager123");
             log.info("   Front Desk: frontdesk@salonhub.com / frontdesk123");
+            log.info("   Technician: technician@salonhub.com / technician123");
             log.info("   Customer: customer@salonhub.com / customer123");
         } else {
             log.info("📝 Test users already exist, skipping initialization");

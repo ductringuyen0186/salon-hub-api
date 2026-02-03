@@ -30,14 +30,9 @@ public class CheckInController {
      */
     @PostMapping
     public ResponseEntity<CheckInResponseDTO> checkIn(@RequestBody @Valid CheckInRequestDTO request) {
-        try {
-            CheckInResponseDTO response = checkInService.checkIn(request);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                new CheckInResponseDTO(null, null, null, null, null, false, null, e.getMessage())
-            );
-        }
+        // Let exceptions propagate to GlobalExceptionHandler for proper error messages
+        CheckInResponseDTO response = checkInService.checkIn(request);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -45,12 +40,9 @@ public class CheckInController {
      */
     @PostMapping("/existing")
     public ResponseEntity<Customer> checkInExisting(@RequestParam String phoneOrEmail) {
-        try {
-            Customer customer = checkInService.checkInExistingCustomer(phoneOrEmail);
-            return ResponseEntity.ok(customer);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        // Let exceptions propagate to GlobalExceptionHandler for proper error messages
+        Customer customer = checkInService.checkInExistingCustomer(phoneOrEmail);
+        return ResponseEntity.ok(customer);
     }
 
     /**
@@ -58,12 +50,9 @@ public class CheckInController {
      */
     @PostMapping("/guest")
     public ResponseEntity<Customer> checkInGuest(@RequestParam String name, @RequestParam String phoneNumber) {
-        try {
-            Customer guest = checkInService.checkInGuest(name, phoneNumber);
-            return ResponseEntity.ok(guest);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        // Let exceptions propagate to GlobalExceptionHandler for proper error messages
+        Customer guest = checkInService.checkInGuest(name, phoneNumber);
+        return ResponseEntity.ok(guest);
     }
 
     @GetMapping("/guests/today")
