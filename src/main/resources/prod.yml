@@ -23,8 +23,11 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     validate-on-migrate: true
-    clean-disabled: true
+    clean-disabled: false
     locations: classpath:db/migration
+
+flyway:
+  force-clean: ${FLYWAY_FORCE_CLEAN:false}
 
 server:
   port: 8080
