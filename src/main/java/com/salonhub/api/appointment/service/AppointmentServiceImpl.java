@@ -2,6 +2,7 @@ package com.salonhub.api.appointment.service;
 
 import com.salonhub.api.appointment.dto.AppointmentRequestDTO;
 import com.salonhub.api.appointment.dto.AppointmentResponseDTO;
+import com.salonhub.api.appointment.dto.BookingRequestDTO;
 import com.salonhub.api.appointment.mapper.AppointmentMapper;
 import com.salonhub.api.appointment.model.Appointment;
 import com.salonhub.api.appointment.model.BookingStatus;
@@ -9,6 +10,7 @@ import com.salonhub.api.appointment.model.ServiceType;
 import com.salonhub.api.appointment.repository.AppointmentRepository;
 import com.salonhub.api.appointment.repository.ServiceTypeRepository;
 
+import com.salonhub.api.customer.model.Customer;
 import com.salonhub.api.customer.repository.CustomerRepository;
 import com.salonhub.api.employee.repository.EmployeeRepository;
 
@@ -145,6 +147,79 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     public void complete(Long id) {
         updateStatus(id, BookingStatus.COMPLETED.name());
+    }
+
+    @Override
+    public AppointmentResponseDTO publicBook(BookingRequestDTO req) {
+        // Step 1: Find or create customer
+        Customer customer = findOrCreateCustomer(req);
+        
+        // Step 2: Get services
+        List<Long> serviceIdList = req.getServiceIdList();
+        if (serviceIdList.isEmpty()) {
+            throw new IllegalArgumentException("At least one service must be selected");
+        }
+        List<ServiceType> services = serviceTypeRepo.findAllById(serviceIdList);
+        if (services.size() != serviceIdList.size()) {
+            throw new EntityNotFoundException("One or more services not found");
+        }
+        
+        // Step 3: Create appointment
+        Appointment appt = new Appointment();
+        appt.setCustomer(customer);
+        appt.setServices(services);
+        appt.setStartTime(req.getScheduledTime());
+        appt.setStatus(BookingStatus.PENDING);
+        
+        // Step 4: Set employee if provided
+        if (req.getStaffId() != null) {
+            appt.setEmployee(employeeRepo.findById(req.getStaffId())
+                .orElseThrow(() -> new EntityNotFoundException("Staff not found with ID: " + req.getStaffId())));
+        }
+        
+        // Step 5: Check for conflicts if employee is assigned
+        int totalEstimate = services.stream()
+            .mapToInt(ServiceType::getEstimatedDurationMinutes)
+            .sum();
+        if (appt.getEmployee() != null) {
+            List<Appointment> conflicts = repo.findByEmployeeIdAndStartTimeBetween(
+                appt.getEmployee().getId(), 
+                appt.getStartTime(), 
+                appt.getStartTime().plusMinutes(totalEstimate)
+            );
+            if (!conflicts.isEmpty()) {
+                throw new IllegalStateException("The selected time slot is already booked for this staff member");
+            }
+        }
+        
+        // Step 6: Save and return
+        Appointment saved = repo.save(appt);
+        AppointmentResponseDTO response = mapper.toResponse(saved);
+        response.setTotalEstimatedDuration(totalEstimate);
+        return response;
+    }
+    
+    /**
+     * Find existing customer by email or phone, or create a new one.
+     */
+    private Customer findOrCreateCustomer(BookingRequestDTO req) {
+        // Try to find by email first
+        if (req.getCustomerEmail() != null && !req.getCustomerEmail().isBlank()) {
+            Customer existing = customerRepo.findByEmail(req.getCustomerEmail());
+            if (existing != null) {
+                return existing;
+            }
+        }
+        
+        // Create new customer (as guest if no email provided)
+        Customer customer = new Customer();
+        customer.setName(req.getCustomerName());
+        customer.setEmail(req.getCustomerEmail());
+        customer.setPhoneNumber(req.getCustomerPhone());
+        customer.setGuest(req.getCustomerEmail() == null || req.getCustomerEmail().isBlank());
+        customer.setNote(req.getNotes());
+        
+        return customerRepo.save(customer);
     }
 
     private AppointmentResponseDTO enrich(Appointment appt) {

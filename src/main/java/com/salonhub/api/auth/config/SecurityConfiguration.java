@@ -48,6 +48,9 @@ public class SecurityConfiguration {
                                         // Service types (public for viewing)
                                         "/api/service-types",
                                         "/api/service-types/**",
+                                        // Public booking endpoint (requires auth but any authenticated user can book)
+                                        "/api/bookings",
+                                        "/api/bookings/**",
                                         // WebSocket endpoints (authentication happens at STOMP level)
                                         "/ws/**",
                                         "/ws-raw/**",
